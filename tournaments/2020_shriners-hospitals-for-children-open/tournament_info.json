@@ -1,0 +1,16 @@
+{
+  "cuts": [
+    {
+      "cutNumber": 1,
+      "cutCount": 76,
+      "cutScore": "-5",
+      "cutPaidCount": 65
+    }
+  ],
+  "tournamentId": "047",
+  "format": "stroke",
+  "pgaYear": "2020",
+  "status": "Official",
+  "playoff": true,
+  "dates": "Thursday Oct 3 - Sunday Oct 6, 2019"
+}
