@@ -1,0 +1,12 @@
+2020-12-01 22:50:54,173 __main__ INFO:	TournamentRun 2019 shriners-hospitals-for-children-open
+Created Mongo DB Collection: True
+2020-12-01 22:51:01,234 __main__ INFO:	TournamentRun 2020 shriners-hospitals-for-children-open
+Created Mongo DB Collection: True
+2020-12-01 22:51:36,417 __main__ INFO:	TournamentRun 2021 shriners-hospitals-for-children-open
+Created Mongo DB Collection: True
+2020-12-01 22:54:20,461 __main__ INFO:	TournamentRun 2020 the-rsm-classic
+Created Mongo DB Collection: True
+2020-12-01 22:54:25,692 __main__ INFO:	TournamentRun 2019 the-rsm-classic
+Created Mongo DB Collection: True
+2020-12-01 22:54:33,382 __main__ INFO:	TournamentRun 2021 the-rsm-classic
+Created Mongo DB Collection: True

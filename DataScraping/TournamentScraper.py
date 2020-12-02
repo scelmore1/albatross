@@ -29,21 +29,17 @@ class TournamentScraper:
         'course_detail': 'https://lbdata.pgatour.com/PGA_YEAR/r/TOURNAMENT_ID/courseC_ID',
         'round_detail': 'https://lbdata.pgatour.com/PGA_YEAR/r/TOURNAMENT_ID/drawer/rROUND_NUM-mMAIN_PLAYER_ID'
     }
-    # private collections
-    __course_ids = set()
 
-    # public dictionaries
-    tournament_info_dict = {}
-    player_meta_dict = {}
-    course_meta_dict = {}
-    player_round_dict = {}
+    timeout_length = 30
 
     def __init__(self, pga_tournament, pga_year, driver=None, wire_requests_dict=None):
         """Initialize scraper with tournament, year, optional logger name, wire requests dict, web driver"""
         self.pga_tournament = pga_tournament
         self.pga_year = pga_year
         # all I/O done in tournaments/'pga_year'_'tournament_name' directory
-        os.chdir('tournaments/' + self.pga_year + '_' + self.pga_tournament + '/')
+        self.dir = 'tournaments/' + self.pga_year + '_' + self.pga_tournament + '/'
+        if not os.path.exists(self.dir):
+            os.makedirs(os.path.dirname(self.dir + 'logs/tournament_scape.log'), exist_ok=True)
         if wire_requests_dict is None:
             self.wire_requests_dict = self.default_wire_html_dict
         else:
@@ -55,6 +51,11 @@ class TournamentScraper:
                               '/leaderboard.html'
         self.tournament_id = None
         self.successfully_scraped = False
+        self.__course_ids = set()
+        self.__tournament_info_dict = {}
+        self.__player_meta_dict = {}
+        self.__course_meta_dict = {}
+        self.__player_round_dict = {}
 
     def __repr__(self):
         """Print Scraper Class with year, tournament and scraped status"""
@@ -62,15 +63,15 @@ class TournamentScraper:
                '\nScrape Status: ' + str(self.successfully_scraped)
 
     def __loggerInitialize(self):
-        self.logger = logging.getLogger('TournamentScraper')
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
-        self.logger.setLevel(logging.INFO)
+        self.__logger = logging.getLogger(self.__class__.__name__ + ' ' + self.pga_year + ' ' + self.pga_tournament)
+        if self.__logger.hasHandlers():
+            self.__logger.handlers.clear()
+        self.__logger.setLevel(logging.INFO)
         # selenium log kept separate from class log
         selenium_logger = logging.getLogger('selenium.webdriver.remote.remote_connection')
         selenium_logger.setLevel(logging.WARNING)
         # create handlers
-        file_handler = logging.FileHandler('logs/tournament_scape.log', mode='w+')
+        file_handler = logging.FileHandler(self.dir + 'logs/tournament_scape.log', mode='w+')
         console_handler = logging.StreamHandler()
         selenium_logger.addHandler(file_handler)
         # define custom formatter
@@ -78,12 +79,12 @@ class TournamentScraper:
         file_handler.setFormatter(formatter)
         console_handler.setFormatter(formatter)
         # assign handlers
-        self.logger.addHandler(file_handler)
-        self.logger.addHandler(console_handler)
+        self.__logger.addHandler(file_handler)
+        self.__logger.addHandler(console_handler)
 
-    def __wireRequestToJSON(self, request_str, timeout_len=20):
+    def __wireRequestToJSON(self, request_str):
         """Take request string and return json object from html wire"""
-        request = self.driver.wait_for_request(request_str, timeout=timeout_len)
+        request = self.driver.wait_for_request(request_str, timeout=self.timeout_length)
         return json.loads(request.response.body.decode('utf-8'))
 
     def __scrapeTournamentInfo(self):
@@ -94,8 +95,8 @@ class TournamentScraper:
 
         # make sure pga years match
         if self.pga_year != findKeyInJSON(tournament_detail_json, 'year'):
-            self.logger.warning('Error: Non-matching PGA years. User Input {}; JSON {}'
-                                .format(self.pga_year, findKeyInJSON(tournament_detail_json, 'year')))
+            self.__logger.warning('Error: Non-matching PGA years. User Input {}; JSON {}'
+                                  .format(self.pga_year, findKeyInJSON(tournament_detail_json, 'year')))
 
         # cutline data
         cut_line_info = findKeyInJSON(tournament_detail_json, 'cutLines')
@@ -107,31 +108,32 @@ class TournamentScraper:
                 'cutScore': cut['cut_line_score'],
                 'cutPaidCount': cut['paid_players_making_cut']
             })
-        self.tournament_info_dict.update(cut_dict)
+        self.__tournament_info_dict.update(cut_dict)
 
         # all other tournament data
-        self.tournament_info_dict.update({
+        self.__tournament_info_dict.update({
             'tournamentId': self.tournament_id,
             'format': findKeyInJSON(tournament_detail_json, 'format'),
             'pgaYear': findKeyInJSON(tournament_detail_json, 'year'),
             'status': findKeyInJSON(tournament_detail_json, 'roundState'),
             'playoff': findKeyInJSON(tournament_detail_json, 'playoffPresent'),
-            'dates': self.driver.find_elements_by_xpath('.//span[@class = "dates"]')[0].text
+            'dates': self.driver.find_elements_by_xpath('.//span[@class = "dates"]')[0].text,
+            'location': self.driver.find_elements_by_xpath('.//span[@class = "name"]')[0].text
         })
 
         # create player name dictionary
         player_rows = findKeyInJSON(tournament_detail_json, 'rows')
         for row in player_rows:
-            self.player_meta_dict[row['playerId']] = {}
-            self.player_meta_dict[row['playerId']]['firstName'] = row['playerNames']['firstName']
-            self.player_meta_dict[row['playerId']]['lastName'] = row['playerNames']['lastName']
+            self.__player_meta_dict[row['playerId']] = {}
+            self.__player_meta_dict[row['playerId']]['firstName'] = row['playerNames']['firstName']
+            self.__player_meta_dict[row['playerId']]['lastName'] = row['playerNames']['lastName']
             self.__course_ids.add(row['courseId'])
 
     def __scrapeCourseDetail(self):
         """Scrape data related to the course itself"""
         # only scrape if course hasn't been added to dictionary yet
         for c_id in self.__course_ids:
-            if c_id in self.course_meta_dict:
+            if c_id in self.__course_meta_dict:
                 continue
 
             request_str = self.wire_requests_dict['course_detail']. \
@@ -152,7 +154,7 @@ class TournamentScraper:
                 hole_detail_dict[hole['holeId']] = round_info
 
             # add metadata
-            self.course_meta_dict[c_id] = {
+            self.__course_meta_dict[c_id] = {
                 'courseCode': findKeyInJSON(course_detail_json, 'courseCode'),
                 'parIn': findKeyInJSON(course_detail_json, 'parIn'),
                 'parOut': findKeyInJSON(course_detail_json, 'parOut'),
@@ -181,17 +183,17 @@ class TournamentScraper:
 
         # check to see if main player id is indeed contained in json data
         if main_player_id not in player_hole_dict:
-            self.logger.warning('Main Player ID is {}, player IDs in JSON File {}'.format(
+            self.__logger.warning('Main Player ID is {}, player IDs in JSON File {}'.format(
                 main_player_id, player_hole_dict.keys()))
 
         # assign shot data and create metadata for round
         for player_id in player_hole_dict.keys():
-            if player_id not in self.player_round_dict:
-                self.player_round_dict[player_id] = {}
-            if round_num not in self.player_round_dict[player_id]:
-                self.player_round_dict[player_id][round_num] = {}
-            self.player_round_dict[player_id][round_num]['play-by-play'] = player_hole_dict[player_id]
-            self.player_round_dict[player_id][round_num]['metadata'] = {
+            if player_id not in self.__player_round_dict:
+                self.__player_round_dict[player_id] = {}
+            if round_num not in self.__player_round_dict[player_id]:
+                self.__player_round_dict[player_id][round_num] = {}
+            self.__player_round_dict[player_id][round_num]['play-by-play'] = player_hole_dict[player_id]
+            self.__player_round_dict[player_id][round_num]['metadata'] = {
                 'completedRound': findKeyInJSON(round_detail_json, 'roundComplete'),
                 'groupId': findKeyInJSON(round_detail_json, 'groupId'),
                 'startingHoleId': findKeyInJSON(round_detail_json, 'startingHoleId'),
@@ -202,34 +204,44 @@ class TournamentScraper:
     def initializeDriver(self):
         """Get driver if none exists, get tournament url"""
         if self.driver is None:
-            self.logger.info('Initializing New Driver...')
+            self.__logger.info('Initializing New Driver...')
             self.driver = webdriver.Chrome(ChromeDriverManager().install())
         try:
             self.driver.get(self.tournament_url)
+            self.driver.minimize_window()
         except Exception as e:
-            self.logger.error('Error loading url {}\n{}'.format(self.tournament_url, e))
+            self.__logger.error('Error loading url {}\n{}'.format(self.tournament_url, e))
 
     def runScrape(self):
         """Call all scraping methods to populate all dictionaries with necessary data"""
-        self.logger.info('\nRunning Scrape for {} {}\n'.format(self.pga_year, self.pga_tournament))
+        self.__logger.info('\nRunning Scrape for {} {}\n'.format(self.pga_year, self.pga_tournament))
         try:
             request_str = self.default_wire_html_dict['tournament_id']
             self.tournament_id = findKeyInJSON(self.__wireRequestToJSON(request_str), 'tid')
         except Exception as e:
-            self.logger.error('Error getting tournament ID\n{}\n'.format(e), exc_info=True)
-            return False
+            self.__logger.error('Error getting tournament ID from ' + self.default_wire_html_dict['tournament_id']
+                                + '; Trying xpath method\n{}\n'.format(e), exc_info=True)
+            try:
+                self.tournament_id = re.findall(r'\d+', self.driver.find_element_by_xpath(
+                    "//meta[@name='branch:deeplink:tournament_id']").get_attribute('content'))[0]
+            except Exception as e:
+                self.__logger.error('Error getting tournament ID from xpath\n{}\n'.format(e),
+                                    exc_info=True)
+                return False
+        finally:
+            self.__logger.info('Tournament ID is {}'.format(self.tournament_id))
 
         try:
             self.__scrapeTournamentInfo()
         except Exception as e:
-            self.logger.error('Error getting tournament details\n{}\n'.format(e), exc_info=True)
+            self.__logger.error('Error getting tournament details\n{}\n'.format(e), exc_info=True)
             return False
 
         try:
             row_lines = WebDriverWait(self.driver, 30).until(
                 EC.visibility_of_all_elements_located((By.CSS_SELECTOR, 'tr.line-row.line-row')))
         except Exception as e:
-            self.logger.error('Error locating player elements on page\n{}\n'.format(e), exc_info=True)
+            self.__logger.error('Error locating player elements on page\n{}\n'.format(e), exc_info=True)
             return False
         else:
             # iterate through the players contained on the url page
@@ -239,12 +251,12 @@ class TournamentScraper:
                 # get player's shot information chart open on url
                 _ = row.location_once_scrolled_into_view
                 main_player_id = re.findall(r'\d+', row.get_attribute('class'))[0]
-                self.logger.info('Scraping row {}, player ID {}'.format(i, main_player_id))
+                self.__logger.info('Scraping row {}, player ID {}'.format(i, main_player_id))
                 WebDriverWait(row, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'player-name-col'))).click()
                 try:
                     self.__scrapeCourseDetail()
                 except Exception as e:
-                    self.logger.error('Error getting course detail\n{}\n'.format(e), exc_info=True)
+                    self.__logger.error('Error getting course detail\n{}\n'.format(e), exc_info=True)
                     continue
 
                 WebDriverWait(row.parent, 10).until(
@@ -255,65 +267,44 @@ class TournamentScraper:
                 # go round by round to scrape data
                 for round_button in round_buttons:
                     round_num = round_button.text
-                    self.logger.info('Getting data for round {}'.format(round_num))
-                    if main_player_id in self.player_round_dict and round_num in self.player_round_dict[main_player_id]:
+                    self.__logger.info('Getting data for round {}'.format(round_num))
+                    if main_player_id in self.__player_round_dict and round_num in self.__player_round_dict[
+                        main_player_id]:
                         continue
                     WebDriverWait(play_tab, 10).until(EC.element_to_be_clickable(
                         (By.XPATH, './div/div[1]/div[1]/span[' + str(int(round_num) + 1) + ']'))).click()
                     try:
                         self.__scrapePlayerDetail(main_player_id, round_num)
                     except Exception as e:
-                        self.logger.error('Error scraping player detail for {}, round number {}\n{}\n'.
-                                          format(main_player_id, round_num, e), exc_info=True)
+                        self.__logger.error('Error scraping player detail for {}, round number {}\n{}\n'.
+                                            format(main_player_id, round_num, e), exc_info=True)
                         continue
 
                 # this closes the player's shot information chart
                 WebDriverWait(row, 10).until(EC.element_to_be_clickable((By.CLASS_NAME, 'player-name-col'))).click()
 
         finally:
-            # self.driver.close()
-            if len(self.player_round_dict) == len(self.player_meta_dict):
+            if len(self.__player_round_dict) == len(self.__player_meta_dict):
                 self.successfully_scraped = True
-                self.logger.info('Successfully scraped data for all players in tournament {} {}'.format(self.pga_year,
-                                                                                                        self.pga_tournament))
-            elif len(self.player_round_dict) == 0:
+                self.__logger.info('Successfully scraped data for all players in tournament {} {}'.format(self.pga_year,
+                                                                                                          self.pga_tournament))
+            elif len(self.__player_round_dict) == 0:
                 self.successfully_scraped = False
-                self.logger.info(
+                self.__logger.info(
                     'Unsuccessfully scraped data for tournament {} {}'.format(self.pga_year, self.pga_tournament))
                 return False
-            elif len(self.player_round_dict) < len(self.player_meta_dict):
+            elif len(self.__player_round_dict) < len(self.__player_meta_dict):
                 self.successfully_scraped = False
-                self.logger.info('Successfully scraped data for {:.2f}% of players in tournament {} {}'.
-                                 format((len(self.player_round_dict) / len(self.player_meta_dict)) * 100, self.pga_year,
-                                        self.pga_tournament))
+                self.__logger.info('Only scraped data for {:.2f}% of players in tournament {} {}'.
+                                   format((len(self.__player_round_dict) / len(self.__player_meta_dict)) * 100,
+                                          self.pga_year,
+                                          self.pga_tournament))
 
             return True
 
-    def uploadDictsToJSON(self):
-        """Upload the dictionaries to json files for debugging purposes"""
-        with open('player_round.json', 'w') as f:
-            json.dump(self.player_round_dict, f)
-        with open('player_meta.json', 'w') as f:
-            json.dump(self.player_meta_dict, f)
-        with open('tournament_info.json', 'w') as f:
-            json.dump(self.tournament_info_dict, f)
-        with open('course_meta.json', 'w') as f:
-            json.dump(self.course_meta_dict, f)
-
-    def downloadDictsFromJSON(self):
-        """Download the JSON files to dictionaries for debugging purposes"""
-        with open('player_round.json', 'r') as f:
-            self.player_round_dict = json.load(f)
-        with open('player_meta.json', 'r') as f:
-            self.player_meta_dict = json.load(f)
-        with open('tournament_info.json', 'r') as f:
-            self.tournament_info_dict = json.load(f)
-        with open('course_meta.json', 'r') as f:
-            self.course_meta_dict = json.load(f)
-
     def __convertPlayerRoundToMongoDBCollection(self):
         player_round_collection = []
-        for player_id, round_num in self.player_round_dict.items():
+        for player_id, round_num in self.__player_round_dict.items():
             for round_key, round_values in round_num.items():
                 player_round_level = {'playerID': player_id, 'roundNumber': round_key}
                 player_round_level.update(round_values['metadata'])
@@ -328,7 +319,7 @@ class TournamentScraper:
 
     def __convertPlayerMetaToMongoDBCollection(self):
         player_meta_collection = []
-        for player_id, meta_values in self.player_meta_dict.items():
+        for player_id, meta_values in self.__player_meta_dict.items():
             player_meta = {'playerID': player_id}
             player_meta.update(meta_values)
             player_meta_collection.append(player_meta)
@@ -336,7 +327,7 @@ class TournamentScraper:
 
     def __convertCourseMetaToMongoDBCollection(self):
         course_meta_collection = []
-        for course_id, course_details in self.course_meta_dict.items():
+        for course_id, course_details in self.__course_meta_dict.items():
             course_meta = {'courseID': course_id}
             course_meta.update(course_details)
             hole_level_list = []
@@ -351,17 +342,31 @@ class TournamentScraper:
             course_meta_collection.append(course_meta)
         return course_meta_collection
 
-    def convertDictsToMongoDBCollection(self, dicts=None):
-        if dicts is None:
-            dicts = ['player_round', 'player_meta', 'course_meta', 'tournament_info']
-        mongoDB_collections = []
-        for dict_name in dicts:
-            if dict_name == 'player_round':
-                mongoDB_collections.append(self.__convertPlayerRoundToMongoDBCollection())
-            if dict_name == 'player_meta':
-                mongoDB_collections.append(self.__convertPlayerMetaToMongoDBCollection())
-            if dict_name == 'course_meta':
-                mongoDB_collections.append(self.__convertCourseMetaToMongoDBCollection())
-            if dict_name == 'tournament_info':
-                mongoDB_collections.append(self.tournament_info_dict)
+    def convertDictsToMongoDBCollection(self):
+        """General method for converting all class dictionaries to Mongo DB Collections"""
+        mongoDB_collections = [self.__convertPlayerRoundToMongoDBCollection(),
+                               self.__convertPlayerMetaToMongoDBCollection(),
+                               self.__convertCourseMetaToMongoDBCollection(), self.__tournament_info_dict]
         return mongoDB_collections
+
+    def uploadDictsToJSON(self):
+        """Upload the dictionaries to json files for debugging purposes"""
+        with open(self.dir + 'player_round.json', 'w') as f:
+            json.dump(self.__player_round_dict, f)
+        with open(self.dir + 'player_meta.json', 'w') as f:
+            json.dump(self.__player_meta_dict, f)
+        with open(self.dir + 'tournament_info.json', 'w') as f:
+            json.dump(self.__tournament_info_dict, f)
+        with open(self.dir + 'course_meta.json', 'w') as f:
+            json.dump(self.__course_meta_dict, f)
+
+    def downloadDictsFromJSON(self):
+        """Download the JSON files to dictionaries for debugging purposes"""
+        with open(self.dir + 'player_round.json', 'r') as f:
+            self.__player_round_dict = json.load(f)
+        with open(self.dir + 'player_meta.json', 'r') as f:
+            self.__player_meta_dict = json.load(f)
+        with open(self.dir + 'tournament_info.json', 'r') as f:
+            self.__tournament_info_dict = json.load(f)
+        with open(self.dir + 'course_meta.json', 'r') as f:
+            self.__course_meta_dict = json.load(f)

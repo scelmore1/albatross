@@ -1,0 +1,36 @@
+2020-12-01 22:47:40,231 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Initializing New Driver...
+2020-12-01 22:50:06,331 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	
+Running Scrape for 2019 shriners-hospitals-for-children-open
+
+2020-12-01 22:50:06,385 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Tournament ID is 047
+2020-12-01 22:50:09,535 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Scraping row 0, player ID 47959
+2020-12-01 22:50:12,675 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 1
+2020-12-01 22:50:16,351 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 2
+2020-12-01 22:50:20,407 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 3
+2020-12-01 22:50:22,228 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 4
+2020-12-01 22:50:24,588 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Scraping row 1, player ID 35450
+2020-12-01 22:50:27,290 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 1
+2020-12-01 22:50:27,309 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 2
+2020-12-01 22:50:27,322 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 3
+2020-12-01 22:50:28,226 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 4
+2020-12-01 22:50:29,719 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Scraping row 2, player ID 37275
+2020-12-01 22:50:31,223 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 1
+2020-12-01 22:50:31,982 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 2
+2020-12-01 22:50:32,998 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 3
+2020-12-01 22:50:33,955 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 4
+2020-12-01 22:50:34,970 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Scraping row 3, player ID 32102
+2020-12-01 22:50:37,687 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 1
+2020-12-01 22:50:40,131 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 2
+2020-12-01 22:50:41,760 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 3
+2020-12-01 22:50:42,712 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 4
+2020-12-01 22:50:43,721 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Scraping row 4, player ID 45526
+2020-12-01 22:50:45,520 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 1
+2020-12-01 22:50:46,341 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 2
+2020-12-01 22:50:47,400 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 3
+2020-12-01 22:50:47,451 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 4
+2020-12-01 22:50:48,810 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Scraping row 5, player ID 34431
+2020-12-01 22:50:50,502 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 1
+2020-12-01 22:50:51,252 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 2
+2020-12-01 22:50:52,127 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 3
+2020-12-01 22:50:53,035 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Getting data for round 4
+2020-12-01 22:50:54,031 TournamentScraper 2019 shriners-hospitals-for-children-open INFO:	Only scraped data for 21.97% of players in tournament 2019 shriners-hospitals-for-children-open

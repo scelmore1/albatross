@@ -8,7 +8,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from seleniumwire import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
-pga_year = '2020'
+pga_year = '2021'
 pga_tournament = 'shriners-hospitals-for-children-open'
 
 tournament_url = 'https://www.pgatour.com/competition/' + pga_year + '/' + pga_tournament + '/leaderboard.html'
