@@ -1,0 +1,36 @@
+2020-12-01 22:51:36,418 TournamentScraper 2019 the-rsm-classic INFO:	Initializing New Driver...
+2020-12-01 22:53:34,969 TournamentScraper 2019 the-rsm-classic INFO:	
+Running Scrape for 2019 the-rsm-classic
+
+2020-12-01 22:53:35,029 TournamentScraper 2019 the-rsm-classic INFO:	Tournament ID is 493
+2020-12-01 22:53:41,650 TournamentScraper 2019 the-rsm-classic INFO:	Scraping row 0, player ID 21961
+2020-12-01 22:53:47,326 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 1
+2020-12-01 22:53:49,498 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 2
+2020-12-01 22:53:52,842 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 3
+2020-12-01 22:53:54,484 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 4
+2020-12-01 22:53:56,394 TournamentScraper 2019 the-rsm-classic INFO:	Scraping row 1, player ID 36699
+2020-12-01 22:53:59,305 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 1
+2020-12-01 22:54:00,320 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 2
+2020-12-01 22:54:00,929 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 3
+2020-12-01 22:54:01,851 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 4
+2020-12-01 22:54:03,126 TournamentScraper 2019 the-rsm-classic INFO:	Scraping row 2, player ID 29221
+2020-12-01 22:54:04,867 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 1
+2020-12-01 22:54:05,929 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 2
+2020-12-01 22:54:06,543 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 3
+2020-12-01 22:54:07,525 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 4
+2020-12-01 22:54:08,766 TournamentScraper 2019 the-rsm-classic INFO:	Scraping row 3, player ID 27958
+2020-12-01 22:54:12,967 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 1
+2020-12-01 22:54:14,140 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 2
+2020-12-01 22:54:14,930 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 3
+2020-12-01 22:54:15,799 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 4
+2020-12-01 22:54:16,621 TournamentScraper 2019 the-rsm-classic INFO:	Scraping row 4, player ID 27129
+2020-12-01 22:54:18,780 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 1
+2020-12-01 22:54:19,447 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 2
+2020-12-01 22:54:20,209 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 3
+2020-12-01 22:54:21,461 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 4
+2020-12-01 22:54:21,884 TournamentScraper 2019 the-rsm-classic INFO:	Scraping row 5, player ID 52372
+2020-12-01 22:54:23,369 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 1
+2020-12-01 22:54:24,265 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 2
+2020-12-01 22:54:25,163 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 3
+2020-12-01 22:54:25,184 TournamentScraper 2019 the-rsm-classic INFO:	Getting data for round 4
+2020-12-01 22:54:25,629 TournamentScraper 2019 the-rsm-classic INFO:	Only scraped data for 16.03% of players in tournament 2019 the-rsm-classic
