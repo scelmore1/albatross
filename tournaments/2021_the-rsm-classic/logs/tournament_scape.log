@@ -1,36 +1,17 @@
-2020-12-01 22:50:54,174 TournamentScraper 2021 the-rsm-classic INFO:	Initializing New Driver...
-2020-12-01 22:53:57,154 TournamentScraper 2021 the-rsm-classic INFO:	
+2020-12-03 15:44:38,096 TournamentScraper 2021 the-rsm-classic INFO:	
 Running Scrape for 2021 the-rsm-classic
+URL is https://www.pgatour.com/competition/2021/the-rsm-classic/leaderboard.html
 
-2020-12-01 22:53:57,242 TournamentScraper 2021 the-rsm-classic INFO:	Tournament ID is 493
-2020-12-01 22:54:01,094 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 0, player ID 34431
-2020-12-01 22:54:02,846 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1
-2020-12-01 22:54:03,598 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2
-2020-12-01 22:54:04,606 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3
-2020-12-01 22:54:05,364 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4
-2020-12-01 22:54:06,818 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 1, player ID 29478
-2020-12-01 22:54:08,131 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1
-2020-12-01 22:54:09,130 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2
-2020-12-01 22:54:10,154 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3
-2020-12-01 22:54:11,169 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4
-2020-12-01 22:54:12,524 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 2, player ID 33419
-2020-12-01 22:54:14,297 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1
-2020-12-01 22:54:15,328 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2
-2020-12-01 22:54:16,282 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3
-2020-12-01 22:54:17,027 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4
-2020-12-01 22:54:18,315 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 3, player ID 29454
-2020-12-01 22:54:19,987 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1
-2020-12-01 22:54:21,206 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2
-2020-12-01 22:54:22,105 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3
-2020-12-01 22:54:22,995 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4
-2020-12-01 22:54:23,835 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 4, player ID 33410
-2020-12-01 22:54:25,196 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1
-2020-12-01 22:54:26,334 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2
-2020-12-01 22:54:27,441 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3
-2020-12-01 22:54:28,503 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4
-2020-12-01 22:54:29,165 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 5, player ID 34099
-2020-12-01 22:54:30,435 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1
-2020-12-01 22:54:31,094 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2
-2020-12-01 22:54:31,734 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3
-2020-12-01 22:54:32,634 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4
-2020-12-01 22:54:33,318 TournamentScraper 2021 the-rsm-classic INFO:	Only scraped data for 20.51% of players in tournament 2021 the-rsm-classic
+2020-12-03 15:45:44,472 TournamentScraper 2021 the-rsm-classic INFO:	Tournament ID is 493
+2020-12-03 15:45:47,347 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 0, player ID 34431
+2020-12-03 15:45:49,071 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1, player ID 34431
+2020-12-03 15:45:49,573 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2, player ID 34431
+2020-12-03 15:45:50,100 TournamentScraper 2021 the-rsm-classic WARNING:	Course ID 889 came through the wire but did not exist in the general course JSON
+2020-12-03 15:45:50,154 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3, player ID 34431
+2020-12-03 15:45:50,940 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4, player ID 34431
+2020-12-03 15:45:51,705 TournamentScraper 2021 the-rsm-classic INFO:	Scraping row 1, player ID 29478
+2020-12-03 15:45:53,635 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 1, player ID 29478
+2020-12-03 15:45:54,359 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 2, player ID 29478
+2020-12-03 15:45:54,779 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 3, player ID 29478
+2020-12-03 15:45:55,213 TournamentScraper 2021 the-rsm-classic INFO:	Getting data for round 4, player ID 29478
+2020-12-03 15:45:56,255 TournamentScraper 2021 the-rsm-classic INFO:	Only scraped data for 8.33% of players in tournament 2021 the-rsm-classic
