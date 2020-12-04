@@ -11,15 +11,20 @@ from Logging.MyLogger import MyLogger
 class WebDriver:
     """Initialize a Selenium Web Driver and make all calls via this class"""
 
-    def __init__(self, called_from_logger, wait_time=30, wire_time=20):
+    def __init__(self, called_from_logger, wait_time=40, wire_time=30):
         """Initialize new web driver using selenium"""
         self._wait_time = wait_time
         self._wire_time = wire_time
         self._class_logger = called_from_logger
         self._selenium_logger = MyLogger('selenium.webdriver.remote.remote_connection', None,
-                                         logging.WARNING).getLogger()
+                                         logging.INFO).getLogger()
         self._class_logger.info('Initializing New Driver...')
-        self._driver = webdriver.Chrome(ChromeDriverManager().install())
+        chrome_options = webdriver.ChromeOptions()
+        prefs = {"profile.default_content_setting_values.notifications": 2,
+                 "profile.managed_default_content_settings.images": 2}
+        chrome_options.add_experimental_option("prefs", prefs)
+        self._driver = webdriver.Chrome(ChromeDriverManager().install(), chrome_options=chrome_options)
+        self._driver.create_options()
 
     def updateLogLocations(self, tournament_name, file_handler):
         # selenium log kept separate from class log

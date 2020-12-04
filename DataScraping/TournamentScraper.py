@@ -268,7 +268,7 @@ class TournamentScraper:
 
         # iterate through the players contained on the url page
         for i, row in enumerate(row_lines):
-            if i > 1:
+            if i > 50:
                 continue
             # get player's shot information chart open on url
             _ = row.location_once_scrolled_into_view
@@ -374,7 +374,7 @@ class TournamentScraper:
         return course_meta_collection
 
     def convertDictsToMongoDBCollection(self):
-        """General method for converting all class dictionaries to Mongo DB Collections"""
+        """General method for converting all class dictionaries to MongoDB Collections"""
         mongoDB_collections = [self.__convertPlayerRoundToMongoDBCollection(),
                                self.__convertPlayerMetaToMongoDBCollection(),
                                self.__convertCourseMetaToMongoDBCollection(), self._tournament_info_dict]

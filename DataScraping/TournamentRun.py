@@ -25,7 +25,7 @@ class TournamentRun:
         return self.scraped_tournament.web_driver
 
     def __getMongoDBCollectionsFromScrape(self, driver, remove_driver):
-        """Get Mongo DB collections from the Tournament Scraper,
+        """Get MongoDB collections from the Tournament Scraper,
         pass in a driver if one exists"""
         self.scraped_tournament = TournamentScraper(self.name, self.year, driver)
         if self.scraped_tournament.runScrape():
