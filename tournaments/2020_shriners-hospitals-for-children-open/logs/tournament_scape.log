@@ -1,36 +1,26 @@
-2020-12-01 22:47:40,230 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Initializing New Driver...
-2020-12-01 22:50:15,570 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	
+2020-12-03 15:42:15,861 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	
 Running Scrape for 2020 shriners-hospitals-for-children-open
+URL is https://www.pgatour.com/competition/2020/shriners-hospitals-for-children-open/leaderboard.html
 
-2020-12-01 22:50:15,607 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Tournament ID is 047
-2020-12-01 22:50:19,893 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 0, player ID 25396
-2020-12-01 22:50:24,193 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1
-2020-12-01 22:50:25,582 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2
-2020-12-01 22:50:26,716 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3
-2020-12-01 22:50:27,614 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4
-2020-12-01 22:50:28,918 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 1, player ID 35450
-2020-12-01 22:50:30,628 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1
-2020-12-01 22:50:31,364 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2
-2020-12-01 22:50:33,037 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3
-2020-12-01 22:50:34,502 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4
-2020-12-01 22:50:35,459 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 2, player ID 24361
-2020-12-01 22:50:40,744 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1
-2020-12-01 22:50:41,781 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2
-2020-12-01 22:50:42,680 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3
-2020-12-01 22:50:43,384 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4
-2020-12-01 22:50:44,723 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 3, player ID 47959
-2020-12-01 22:50:46,705 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1
-2020-12-01 22:50:46,737 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2
-2020-12-01 22:50:46,758 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3
-2020-12-01 22:50:47,453 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4
-2020-12-01 22:50:48,774 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 4, player ID 33399
-2020-12-01 22:50:50,777 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1
-2020-12-01 22:50:51,816 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2
-2020-12-01 22:50:52,459 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3
-2020-12-01 22:50:53,068 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4
-2020-12-01 22:50:54,543 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 5, player ID 31560
-2020-12-01 22:50:57,810 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1
-2020-12-01 22:50:58,782 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2
-2020-12-01 22:50:59,540 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3
-2020-12-01 22:50:59,553 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4
-2020-12-01 22:51:01,108 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Only scraped data for 13.89% of players in tournament 2020 shriners-hospitals-for-children-open
+2020-12-03 15:44:02,643 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Tournament ID is 047
+2020-12-03 15:44:23,153 WebDriver 2020 shriners-hospitals-for-children-open ERROR:	Error making request https://statdata.pgatour.com/r/047/course.json
+Message: Timed out after 20s waiting for request https://statdata.pgatour.com/r/047/course.json
+
+2020-12-03 15:44:23,153 TournamentScraper 2020 shriners-hospitals-for-children-open ERROR:	Error scraping course general data
+Traceback (most recent call last):
+  File "C:\Users\Scott\PycharmProjects\albatross\DataScraping\TournamentScraper.py", line 254, in runScrape
+    self.__scrapeCourseGeneral()
+  File "C:\Users\Scott\PycharmProjects\albatross\DataScraping\TournamentScraper.py", line 122, in __scrapeCourseGeneral
+    raise RuntimeError('Error scraping course general data')
+RuntimeError: Error scraping course general data
+2020-12-03 15:44:27,080 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 0, player ID 25396
+2020-12-03 15:44:28,768 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1, player ID 25396
+2020-12-03 15:44:29,757 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2, player ID 25396
+2020-12-03 15:44:30,841 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3, player ID 25396
+2020-12-03 15:44:31,681 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4, player ID 25396
+2020-12-03 15:44:32,835 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Scraping row 1, player ID 35450
+2020-12-03 15:44:34,413 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 1, player ID 35450
+2020-12-03 15:44:35,126 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 2, player ID 35450
+2020-12-03 15:44:35,833 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 3, player ID 35450
+2020-12-03 15:44:36,738 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Getting data for round 4, player ID 35450
+2020-12-03 15:44:37,516 TournamentScraper 2020 shriners-hospitals-for-children-open INFO:	Only scraped data for 5.56% of players in tournament 2020 shriners-hospitals-for-children-open

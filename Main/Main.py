@@ -1,47 +1,44 @@
 import concurrent.futures
+import itertools
 import logging
 
 import pandas as pd
 
 from DataScraping.TournamentRun import TournamentRun
+from Logging.MyLogger import MyLogger
 
-
-def initLogger():
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.INFO)
-    # remove existing handlers
-    if logger.hasHandlers():
-        logger.handlers.clear()
-    # create handlers
-    file_handler = logging.FileHandler('Main/main.log', mode='w+')
-    console_handler = logging.StreamHandler()
-    # define custom formatter
-    formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s:\t%(message)s')
-    file_handler.setFormatter(formatter)
-    console_handler.setFormatter(formatter)
-    # assign handlers
-    logger.addHandler(file_handler)
-    logger.addHandler(console_handler)
-    return logger
-
+tournaments_path = 'tournaments/TournamentList.csv'
 
 if __name__ == '__main__':
-    main_logger = initLogger()
-    tournament_details = pd.read_csv('tournaments/TournamentList.csv')
-    tournaments = tournament_details.apply(lambda row: TournamentRun(row['Name'], row['Year']), axis=1).tolist()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
-        futures = []
-        for i, tournament in enumerate(tournaments):
-            futures.append(executor.submit(tournament.createMongoDBCollectionsFromScrape))
-        for future in concurrent.futures.as_completed(futures):
-            main_logger.info('{}'.format(future.result()))
+    max_drivers = 2
+    main_logger = MyLogger(__name__, 'Main/logs/main.log', logging.INFO).getLogger()
+    tournament_details = pd.read_csv(tournaments_path, skipinitialspace=True)
+    tournament_details.columns = tournament_details.columns.str.strip()
+    tournaments = tournament_details.apply(lambda row: TournamentRun(row['Name'].strip(), row['Year'], main_logger),
+                                           axis=1).tolist()
+    iter_tournaments = iter(tournaments)
 
-    combined_collections = []
-    for tournament in tournaments:
-        tournament_dict = {'Tournament Name': tournament.name,
-                           'Year': tournament.year,
-                           'Player Rounds': tournament.mongo_collections[0],
-                           'Player Metadata': tournament.mongo_collections[1],
-                           'Course Metadata': tournament.mongo_collections[2],
-                           'Tournament Details': tournament.mongo_collections[3]}
-        combined_collections.append(tournament_dict)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_drivers) as executor:
+        # Only schedule max_drivers amount of futures to start
+        futures = {
+            executor.submit(tournament.runTournament, None, False): tournament
+            for tournament in itertools.islice(iter_tournaments, max_drivers)
+        }
+
+        while futures:
+            # Wait for the next future to complete.
+            finished, _ = concurrent.futures.wait(
+                futures, return_when=concurrent.futures.FIRST_COMPLETED
+            )
+
+            for future in finished:
+                # get the completed tournament
+                completed_tournament = futures.pop(future)
+                main_logger.info('{}'.format(future.result()))
+
+            for tournament in itertools.islice(iter_tournaments, len(finished)):
+                if tournaments.index(tournament) >= (len(tournaments) - max_drivers):
+                    future = executor.submit(tournament.runTournament, completed_tournament.getDriverObj(), True)
+                else:
+                    future = executor.submit(tournament.runTournament, completed_tournament.getDriverObj(), False)
+                futures[future] = tournament
