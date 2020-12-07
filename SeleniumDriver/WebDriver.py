@@ -11,7 +11,7 @@ from Logging.MyLogger import MyLogger
 class WebDriver:
     """Initialize a Selenium Web Driver and make all calls via this class"""
 
-    def __init__(self, called_from_logger, wait_time=40, wire_time=30):
+    def __init__(self, called_from_logger, wait_time=20, wire_time=5):
         """Initialize new web driver using selenium"""
         self._wait_time = wait_time
         self._wire_time = wire_time

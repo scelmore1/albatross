@@ -7,11 +7,14 @@ import pandas as pd
 from DataScraping.TournamentRun import TournamentRun
 from Logging.MyLogger import MyLogger
 
+tournaments_path = 'tournaments/TournamentList.csv'
+
 if __name__ == '__main__':
-    max_drivers = 3
+    max_drivers = 2
     main_logger = MyLogger(__name__, 'Main/logs/main.log', logging.INFO).getLogger()
-    tournament_details = pd.read_csv('tournaments/TournamentList.csv', skipinitialspace=True)
-    tournaments = tournament_details.apply(lambda row: TournamentRun(row['Name'], row['Year'], main_logger),
+    tournament_details = pd.read_csv(tournaments_path, skipinitialspace=True)
+    tournament_details.columns = tournament_details.columns.str.strip()
+    tournaments = tournament_details.apply(lambda row: TournamentRun(row['Name'].strip(), row['Year'], main_logger),
                                            axis=1).tolist()
     iter_tournaments = iter(tournaments)
 
