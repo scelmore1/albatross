@@ -4,24 +4,32 @@ import logging
 
 import pandas as pd
 
-from DataScraping.TournamentRun import TournamentRun
 from Logging.MyLogger import MyLogger
+from MongoDB.MongoDownload import MongoDownload
+from MongoDB.MongoInitialization import MongoInitialization
+from TournamentRun import TournamentRun
 
+# tournaments_path = 'tournaments/FailedTournamentList.csv'
 tournaments_path = 'tournaments/TournamentList.csv'
 
 if __name__ == '__main__':
     max_drivers = 2
-    main_logger = MyLogger(__name__, 'Main/logs/main.log', logging.INFO).getLogger()
-    tournament_details = pd.read_csv(tournaments_path, skipinitialspace=True)
-    tournament_details.columns = tournament_details.columns.str.strip()
-    tournaments = tournament_details.apply(lambda row: TournamentRun(row['Name'].strip(), row['Year'], main_logger),
+    main_logger = MyLogger('Main', 'Main/logs/main.log', logging.INFO).getLogger()
+    mongo_obj = MongoInitialization()
+    tournament_df = pd.read_csv(tournaments_path, delimiter=',')
+    tournament_df.columns = tournament_df.columns.str.strip()
+    tournament_df['Name'] = tournament_df['Name'].str.strip()
+    mongo_download = MongoDownload(mongo_obj)
+    tournaments_scraped = mongo_download.getTournamentsScraped()
+    filter_tournaments = tournament_df[~tournament_df[['Name', 'Year']].apply(tuple, 1).isin(tournaments_scraped)]
+    tournaments = filter_tournaments.apply(lambda row: TournamentRun(row[0], row[1], mongo_obj, main_logger),
                                            axis=1).tolist()
     iter_tournaments = iter(tournaments)
 
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_drivers) as executor:
         # Only schedule max_drivers amount of futures to start
         futures = {
-            executor.submit(tournament.runTournament, None, False): tournament
+            executor.submit(tournament.runTournament, None, True): tournament
             for tournament in itertools.islice(iter_tournaments, max_drivers)
         }
 
@@ -37,8 +45,8 @@ if __name__ == '__main__':
                 main_logger.info('{}'.format(future.result()))
 
             for tournament in itertools.islice(iter_tournaments, len(finished)):
-                if tournaments.index(tournament) >= (len(tournaments) - max_drivers):
-                    future = executor.submit(tournament.runTournament, completed_tournament.getDriverObj(), True)
-                else:
-                    future = executor.submit(tournament.runTournament, completed_tournament.getDriverObj(), False)
+                future = executor.submit(tournament.runTournament, None, True)
                 futures[future] = tournament
+
+    failed_scrape_df = pd.DataFrame(columns=['Name', 'Year'], data=tournaments[0].failed_scrape_list)
+    failed_scrape_df.to_csv('tournaments/FailedTournamentList.csv', index=False, header=True)

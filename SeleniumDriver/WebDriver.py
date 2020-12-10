@@ -1,15 +1,45 @@
 import json
 import logging
 
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import WebDriverWait, Select
 from seleniumwire import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
 
 from Logging.MyLogger import MyLogger
 
 
+def getProxies():
+    driver = webdriver.Chrome(ChromeDriverManager().install())
+    driver.get("https://free-proxy-list.net/")
+
+    PROXIES = []
+    table_len = Select(driver.find_element_by_name('proxylisttable_length'))
+    table_len.select_by_value('80')
+    proxies = driver.find_elements_by_css_selector("tr[role='row']")
+    for p in proxies:
+        result = p.text.split(" ")
+
+        if result[-4] == "yes":
+            PROXIES.append(result[0] + ":" + result[1])
+
+    driver.close()
+    return PROXIES
+
+
+def proxyDriver(proxies):
+    if len(proxies) < 1:
+        print("--- Proxies used up (%s)" % len(proxies))
+        proxies = getProxies()
+
+    pxy = proxies[-1]
+    chrome_options = webdriver.ChromeOptions()
+    chrome_options.add_argument('--proxy-server=https://{}'.format(pxy))
+    return chrome_options
+
+
 class WebDriver:
     """Initialize a Selenium Web Driver and make all calls via this class"""
+    proxy_list = getProxies()
 
     def __init__(self, called_from_logger, wait_time=20, wire_time=5):
         """Initialize new web driver using selenium"""
@@ -19,7 +49,7 @@ class WebDriver:
         self._selenium_logger = MyLogger('selenium.webdriver.remote.remote_connection', None,
                                          logging.INFO).getLogger()
         self._class_logger.info('Initializing New Driver...')
-        chrome_options = webdriver.ChromeOptions()
+        chrome_options = proxyDriver(self.proxy_list)
         prefs = {"profile.default_content_setting_values.notifications": 2,
                  "profile.managed_default_content_settings.images": 2}
         chrome_options.add_experimental_option("prefs", prefs)

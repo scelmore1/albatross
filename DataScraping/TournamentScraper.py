@@ -1,6 +1,5 @@
 import json
 import logging
-import os
 import re
 
 from nested_lookup import nested_lookup
@@ -21,12 +20,12 @@ class TournamentScraper:
 
     def __init__(self, pga_tournament, pga_year, driver=None):
         """Initialize scraper with tournament, year, optional logger name, wire requests dict, web driver"""
-        self.pga_tournament = pga_tournament
-        self.pga_year = pga_year
-        self.tournament_url = 'https://www.pgatour.com/competition/' + pga_year + '/' + pga_tournament + \
-                              '/leaderboard.html'
+        self._pga_tournament = pga_tournament
+        self._pga_year = pga_year
+        self._tournament_url = 'https://www.pgatour.com/competition/' + pga_year + '/' + pga_tournament + \
+                               '/leaderboard.html'
         self.successfully_scraped = 0
-        self._tournament_id = None
+        self.tournament_id = None
         self._run_thrus = 0
 
         # create place holder dictionaries for data once scraped
@@ -48,13 +47,11 @@ class TournamentScraper:
         }
 
         # all I/O done in tournaments/'pga_year'_'tournament_name' directory
-        self.dir = 'tournaments/' + self.pga_year + '_' + self.pga_tournament + '/'
-        if not os.path.exists(self.dir):
-            os.makedirs(os.path.dirname(self.dir + 'logs/tournament_scape.log'), exist_ok=True)
+        self.dir = 'tournaments/' + self._pga_year + '_' + self._pga_tournament + '/'
         self._file_handler = self.dir + 'logs/tournament_scape.log'
 
         # initialize logger
-        self._logger = MyLogger(self.__class__.__name__ + ' ' + self.pga_year + ' ' + self.pga_tournament,
+        self._logger = MyLogger(self.__class__.__name__ + ' ' + self._pga_year + ' ' + self._pga_tournament,
                                 self._file_handler, logging.INFO, 'a').getLogger()
 
         # initialize driver
@@ -62,20 +59,20 @@ class TournamentScraper:
             self.web_driver = WebDriver(self._logger)
         else:
             self.web_driver = driver
-        self.web_driver.updateLogLocations(' ' + self.pga_year + ' ' + self.pga_tournament, self._file_handler)
+        self.web_driver.updateLogLocations(' ' + self._pga_year + ' ' + self._pga_tournament, self._file_handler)
 
     def __repr__(self):
         """Print Scraper Class with year, tournament and scraped status"""
-        return (self.__class__.__name__ + ' ' + self.pga_year + ' ' + self.pga_tournament
+        return (self.__class__.__name__ + ' ' + self._pga_year + ' ' + self._pga_tournament
                 + '\nScrape Status: Scraped {:.2f}% of potential data'.format(self.successfully_scraped))
 
     def _scrapeTournamentJSON(self, tournament_detail_json):
         """Insert into dictionaries from the detailed tournament info JSON"""
 
         # make sure pga years match
-        if self.pga_year != findKeyInJSON(tournament_detail_json, 'year'):
+        if self._pga_year != findKeyInJSON(tournament_detail_json, 'year'):
             self._logger.warning('Error: Non-matching PGA years. User Input {}; JSON {}'
-                                 .format(self.pga_year, findKeyInJSON(tournament_detail_json, 'year')))
+                                 .format(self._pga_year, findKeyInJSON(tournament_detail_json, 'year')))
 
         # cut line data
         cut_line_info = findKeyInJSON(tournament_detail_json, 'cutLines')
@@ -91,7 +88,8 @@ class TournamentScraper:
 
         # all other tournament data
         self._tournament_info_dict.update({
-            'tournamentId': self._tournament_id,
+            'tournamentID': self.tournament_id,
+            'tournamentName': self._pga_tournament,
             'multiCourse': findKeyInJSON(tournament_detail_json, 'multiCourse'),
             'totalRounds': findKeyInJSON(tournament_detail_json, 'totalRounds'),
             'format': findKeyInJSON(tournament_detail_json, 'format'),
@@ -137,8 +135,8 @@ class TournamentScraper:
         if course_id not in self._course_ids:
             # add course to wire requests
             self._course_requests[course_id] = self.template_wire_html_dict['course_detail'] \
-                .replace('PGA_YEAR', self.pga_year) \
-                .replace('TOURNAMENT_ID', self._tournament_id) \
+                .replace('PGA_YEAR', self._pga_year) \
+                .replace('TOURNAMENT_ID', self.tournament_id) \
                 .replace('C_ID', course_id)
             self._course_ids.add(course_id)
 
@@ -226,9 +224,6 @@ class TournamentScraper:
             self._scrapeTournamentJSON(tournament_detail_json)
             return True
         else:
-            if self._run_thrus < 3:
-                self._logger.warn('Failed getting tournament details, will retry this scrape again.')
-                self.runScrape()
             return False
 
     def _getCourseGeneralJSON(self, req_str):
@@ -260,11 +255,11 @@ class TournamentScraper:
                                                              (By.XPATH,
                                                               "//meta[@name='branch:deeplink:tournament_id']")),
                                                          'Error getting tournament_id\n{}').get_attribute('content')
-        self._tournament_id = re.findall(r'\d+', tournament_xpath)[0]
-        if not self._tournament_id:
+        self.tournament_id = re.findall(r'\d+', tournament_xpath)[0]
+        if not self.tournament_id:
             self._logger.error('Could not get a tournament ID out of {}\n'.format(tournament_xpath))
             return False
-        self._logger.info('Tournament ID is {}'.format(self._tournament_id))
+        self._logger.info('Tournament ID is {}'.format(self.tournament_id))
         return True
 
     def _scrapeThroughPlayerRow(self, row):
@@ -307,8 +302,8 @@ class TournamentScraper:
 
             player_requests[player_key] = self.template_wire_html_dict[
                 'round_detail'] \
-                .replace('PGA_YEAR', self.pga_year) \
-                .replace('TOURNAMENT_ID', self._tournament_id) \
+                .replace('PGA_YEAR', self._pga_year) \
+                .replace('TOURNAMENT_ID', self.tournament_id) \
                 .replace('ROUND_NUM', round_num) \
                 .replace('MAIN_PLAYER_ID', main_player_id)
 
@@ -320,17 +315,17 @@ class TournamentScraper:
         """After getting all JSON and converting to dictionaries, check to see how we did"""
         if len(self._player_round_dict) == len(self._player_meta_dict):
             self.successfully_scraped = 100
-            self._logger.info('Successfully scraped data for all players in tournament {} {}'.format(self.pga_year,
-                                                                                                     self.pga_tournament))
+            self._logger.info('Successfully scraped data for all players in tournament {} {}'.format(self._pga_year,
+                                                                                                     self._pga_tournament))
         elif len(self._player_round_dict) == 0:
             self._logger.info(
-                'Unsuccessfully scraped data for tournament {} {}'.format(self.pga_year, self.pga_tournament))
+                'Unsuccessfully scraped data for tournament {} {}'.format(self._pga_year, self._pga_tournament))
         elif len(self._player_round_dict) < len(self._player_meta_dict):
             self.successfully_scraped = (len(self._player_round_dict) / len(self._player_meta_dict)) * 100
             self._logger.info('Only scraped data for {:.2f}% of players in tournament {} {}'.
-                              format((len(self._player_round_dict) / len(self._player_meta_dict)) * 100,
-                                     self.pga_year,
-                                     self.pga_tournament))
+                              format(self.successfully_scraped,
+                                     self._pga_year,
+                                     self._pga_tournament))
             self._logger.info(
                 'Player rows unsuccessfully scraped are:\n{}'.format(self._unsuccessful_player_scrape.keys()))
 
@@ -338,27 +333,34 @@ class TournamentScraper:
         """Main function for running the scrape, get all necessary info from the page, iterate through
         players shot charts, try to scrape as much as possible from the JSON requests."""
         self._logger.info(
-            '\nRunning Scrape for {} {}\nURL is {}\n'.format(self.pga_year, self.pga_tournament, self.tournament_url))
+            '\nRunning Scrape for {} {}\nURL is {}\n'.format(self._pga_year, self._pga_tournament,
+                                                             self._tournament_url))
         self._run_thrus += 1
-        self.web_driver.goToURL(self.tournament_url)
-        if self._getTournamentID():
-            # request string for tournament detail
-            tournament_req_str = self.template_wire_html_dict['tournament_detail'].replace(
-                'PGA_YEAR', self.pga_year).replace('TOURNAMENT_ID', self._tournament_id)
-            # scrape JSON of tournament detail
-            if not self._getTournamentJSON(tournament_req_str):
-                return False
-
-            # request string for course general info
-            course_gen_req_str = self.template_wire_html_dict['course_general'].replace(
-                'TOURNAMENT_ID', self._tournament_id)
-            # scrape JSON of course general
-            self._getCourseGeneralJSON(course_gen_req_str)
+        self.web_driver.goToURL(self._tournament_url)
+        if self.tournament_id is not None or self._getTournamentID():
 
             row_lines = self.web_driver.webDriverWait(self.web_driver.getDriver(),
                                                       EC.visibility_of_all_elements_located(
                                                           (By.CSS_SELECTOR, 'tr.line-row.line-row')),
                                                       'Error locating player elements on page\n{}')
+
+            # request string for tournament detail
+            tournament_req_str = self.template_wire_html_dict['tournament_detail'].replace(
+                'PGA_YEAR', self._pga_year).replace('TOURNAMENT_ID', self.tournament_id)
+            # scrape JSON of tournament detail
+            if not self._getTournamentJSON(tournament_req_str):
+                if self._run_thrus < 3:
+                    self._logger.warn('Failed getting tournament details, will retry this scrape again.')
+                    return self.runScrape()
+                else:
+                    return False
+
+            # request string for course general info
+            course_gen_req_str = self.template_wire_html_dict['course_general'].replace(
+                'TOURNAMENT_ID', self.tournament_id)
+            # scrape JSON of course general
+            self._getCourseGeneralJSON(course_gen_req_str)
+
             if row_lines:
                 unsuccessful_rows = set()
                 successive_failures = 0
@@ -367,6 +369,8 @@ class TournamentScraper:
                     # run first time through and keep track of unsuccessful scrapes
                     for row_num, row in enumerate(row_lines[i::3]):
                         row_num = i + (row_num * 3)
+                        # if row_num > 9:
+                        #     continue
                         player_requests = self._scrapeThroughPlayerRow(row)
                         if player_requests is not None:
                             result = 'Successfully'
@@ -406,10 +410,9 @@ class TournamentScraper:
                         for player_key, req_str in player_requests.items():
                             if not self._getPlayerLevelJSON(player_key, req_str):
                                 self._unsuccessful_player_scrape[player_key] = req_str
-                                self._logger.warning(
-                                    'Unsuccessfully retrieved JSON for row number {}, player ID {} -- round number {'
-                                    '}.\n'
-                                        .format(row_num, player_key.split()[0], player_key.split()[1]))
+                                self._logger.warning('Unsuccessfully retrieved JSON for row number {},'
+                                                     ' player ID {} -- round number {}.\n'
+                                                     .format(row_num, player_key.split()[0], player_key.split()[1]))
                                 result = 'Unsuccessfully'
                     else:
                         result = 'Unsuccessfully'
@@ -423,7 +426,8 @@ class TournamentScraper:
         player_round_collection = []
         for player_id, round_num in self._player_round_dict.items():
             for round_key, round_values in round_num.items():
-                player_round_level = {'playerID': player_id, 'roundNumber': round_key}
+                player_round_level = {'playerID': player_id, 'roundNumber': round_key,
+                                      'tournamentID': self.tournament_id, 'pgaYear': self._pga_year}
                 player_round_level.update(round_values['metadata'])
                 player_round_level['holes'] = []
                 for hole_key, hole_values in round_values['play-by-play'].items():
@@ -445,7 +449,7 @@ class TournamentScraper:
     def __convertCourseMetaToMongoDBCollection(self):
         course_meta_collection = []
         for course_id, course_details in self._course_meta_dict.items():
-            course_meta = {'courseID': course_id}
+            course_meta = {'courseID': course_id, 'pgaYear': self._pga_year, 'tournamentID': self.tournament_id}
             course_meta.update(course_details)
             hole_level_list = []
             for hole_key, round_info in course_meta['holes'].items():
