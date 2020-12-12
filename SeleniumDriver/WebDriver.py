@@ -1,6 +1,9 @@
 import json
 import logging
+import re
 
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait, Select
 from seleniumwire import webdriver
 from webdriver_manager.chrome import ChromeDriverManager
@@ -67,7 +70,7 @@ class WebDriver:
         """Pass url for driver to get"""
         try:
             self._driver.get(url_string)
-            self._driver.minimize_window()
+            # self._driver.minimize_window()
         except Exception as e:
             self._class_logger.error('Error loading url {}\n{}'.format(url_string, e))
 
@@ -107,3 +110,16 @@ class WebDriver:
     def closeDriver(self):
         """Close driver"""
         self._driver.close()
+
+
+class wait_for_text_to_match(object):
+    def __init__(self, locator, pattern):
+        self.locator = locator
+        self.pattern = re.compile(pattern)
+
+    def __call__(self, driver):
+        try:
+            element_text = EC._find_element(driver, self.locator).text
+            return self.pattern.search(element_text)
+        except StaleElementReferenceException:
+            return False

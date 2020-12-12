@@ -40,6 +40,10 @@ class MongoInitialization:
             idx = self._tournament_db.tournament_scrape_status.create_index([('tournamentName', 1), ('pgaYear', -1)],
                                                                             unique=True)
             self._logger.info('Created Tournament Scrape Status Collection with index {}\n'.format(idx))
+        if 'sg_stats' not in col_names:
+            idx = self._tournament_db.sg_stats.create_index([('tournamentName', 1), ('pgaYear', -1), ('playerName', 1)],
+                                                            unique=True)
+            self._logger.info('Created SG Stats Collection with index {}\n'.format(idx))
 
     def __repr__(self):
         return 'MongoDB Client is {}\nTournament DB is {}\n'.format(self._client, self._tournament_db)

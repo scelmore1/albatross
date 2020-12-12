@@ -1,5 +1,5 @@
 from DataScraping.TournamentScraper import TournamentScraper
-from MongoDB.MongoUpload import MongoUpload
+from MongoDB.MongoUpload import MongoUploadTournament
 
 
 class TournamentRun:
@@ -16,7 +16,7 @@ class TournamentRun:
 
     def __repr__(self):
         return self.__class__.__name__ + ' ' + str(self.year) + ' ' + self.name + \
-               f'\nScraped and Uploaded to MongoDB: {self._success}\n'
+               f'\nScraped and Uploaded Tournament to MongoDB: {self._success}\n'
 
     def runTournament(self, driver, remove_driver):
         self._logger.info('Scraping Tournament {} -- PGA Year {} \n'.format(self.name, self.year))
@@ -62,7 +62,7 @@ class TournamentRun:
         return mongo_collection
 
     def __uploadMongoDBCollections(self, collection_dict):
-        mongo_upload = MongoUpload(self._mongo_client.getTournamentDB(), self.year, self.name)
+        mongo_upload = MongoUploadTournament(self._mongo_client.getTournamentDB(), self.year, self.name)
         for key, value in collection_dict.items():
             if key == 'Tournament Scrape Status':
                 mongo_upload.uploadTournamentScrapeStatus(value)
