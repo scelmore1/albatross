@@ -9,7 +9,8 @@ class MongoInitialization:
 
     def __init__(self):
         """For connecting and set up to MongoDB"""
-        self.connection_str = "mongodb+srv://scelmore1:albatross@cluster0.olrfe.mongodb.net/<dbname>?retryWrites=true" \
+        self.connection_str = "mongodb+srv://scelmore1:albatross@cluster1.olrfe.mongodb.net/tournament_db?retryWrites" \
+                              "=true" \
                               "&w" \
                               "=majority"
         self._logger = MyLogger('MongoDB', 'MongoDB/logs/mongodb.log', logging.INFO).getLogger()

@@ -10,7 +10,7 @@ from SeleniumDriver.WebDriver import wait_for_text_to_match
 
 class SGScraper:
     """Given a tournament and year, this scrapes pgatour.com tournament result
-     page to create json files containing data on tournament info and player hole by hole shots"""
+     page to create json files containing data on tournament info and player course_hole by course_hole shots"""
 
     def __init__(self):
         """Initialize SG Scraper"""
