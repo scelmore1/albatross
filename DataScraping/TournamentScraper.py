@@ -16,7 +16,7 @@ def findKeyInJSON(json_body, key):
 
 class TournamentScraper:
     """Given a tournament and year, this scrapes pgatour.com tournament result
-     page to create json files containing data on tournament info and player hole by hole shots"""
+     page to create json files containing data on tournament info and player course_hole by course_hole shots"""
 
     def __init__(self, pga_tournament, pga_year, driver=None):
         """Initialize scraper with tournament, year, optional logger name, wire requests dict, web driver"""
@@ -192,7 +192,7 @@ class TournamentScraper:
         self._course_ids.add(course_id)
         hole_detail_dict = {}
 
-        # hole by hole data
+        # course_hole by course_hole data
         for hole in findKeyInJSON(course_detail_json, 'holes'):
             round_info = {'rounds': []}
             for round_details in hole['rounds']:
@@ -254,11 +254,16 @@ class TournamentScraper:
                                                          EC.presence_of_element_located(
                                                              (By.XPATH,
                                                               "//meta[@name='branch:deeplink:tournament_id']")),
-                                                         'Error getting tournament_id\n{}').get_attribute('content')
-        self.tournament_id = re.findall(r'\d+', tournament_xpath)[0]
-        if not self.tournament_id:
+                                                         'Error getting tournament_id\n{}')
+        if tournament_xpath is None:
             self._logger.error('Could not get a tournament ID out of {}\n'.format(tournament_xpath))
             return False
+        self.tournament_id = re.findall(r'\d+', tournament_xpath.get_attribute('content'))[0]
+
+        if not self.tournament_id:
+            self._logger.error('Could not get a tournament ID out of string {}\n'.format(self.tournament_id))
+            return False
+
         self._logger.info('Tournament ID is {}'.format(self.tournament_id))
         return True
 
@@ -308,7 +313,7 @@ class TournamentScraper:
                 .replace('MAIN_PLAYER_ID', main_player_id)
 
         # this closes the player's shot information chart
-        player_name_col_button.click()
+        # player_name_col_button.click()
         return player_requests
 
     def _checkScrapeResults(self):
