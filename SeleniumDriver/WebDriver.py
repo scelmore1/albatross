@@ -44,7 +44,7 @@ class WebDriver:
     """Initialize a Selenium Web Driver and make all calls via this class"""
     proxy_list = getProxies()
 
-    def __init__(self, called_from_logger, wait_time=20, wire_time=5):
+    def __init__(self, called_from_logger, wait_time=10, wire_time=3):
         """Initialize new web driver using selenium"""
         self._wait_time = wait_time
         self._wire_time = wire_time

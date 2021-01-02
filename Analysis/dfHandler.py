@@ -24,10 +24,10 @@ def getShotType(row, arg_length=30, long_putt_length=12):
                 val = 'LNG_PUTT'
             else:
                 val = 'SHT_PUTT'
-    elif row.fromSurface in ['OFW', 'ORO', 'OST', 'OIR', 'ONA', 'OTH', 'OTB'] \
+    elif row.fromSurface in ['OFW', 'ORO', 'OST', 'OIR', 'ONA', 'OTH', 'OTB', 'OWA', 'OBR'] \
             and row.startDistance > (36 * arg_length):
         val = 'APP'
-    elif row.fromSurface in ['OFW', 'ORO', 'OST', 'OIR', 'ONA', 'OTH', 'OGS']:
+    elif row.fromSurface in ['OFW', 'ORO', 'OST', 'OIR', 'ONA', 'OTH', 'OGS', 'OWA', 'OBR']:
         val = 'ARG'
     # elif row.fromSurface in ['OUK', 'OWA']:
     #     val = 'Penalty'
@@ -53,7 +53,7 @@ def getEndLocation(row):
         val = 'Hole'
     elif row.to in ['ELF', 'ERF', 'ERI', 'ELI', 'OFW', 'OIR', 'OCO']:
         val = 'Fairway'
-    elif row.to in ['ERR', 'ELR', 'ORO', 'OCA']:
+    elif row.to in ['ERR', 'ELR', 'ORO', 'OCA', 'OWA', 'OBR']:
         val = 'Rough'
     elif row.to in ['OST', 'EG2', 'EG5', 'EG6', 'EG1', 'EG4', 'EG3', 'EG7', 'OGS', 'EG8']:
         val = 'Bunker'
@@ -250,9 +250,19 @@ if __name__ == '__main__':
     lng_putts = tournament_df[tournament_df.shotType == 'LNG_PUTT']
     sht_putts = tournament_df[tournament_df.shotType == 'SHT_PUTT']
 
-    _ = sns.lmplot(data=tee_shots, x='distanceLeft', y='shotsRemaining', hue='toSurface', lowess=True)
+    tee_shots_no_penalty = tee_shots[tee_shots['toLocation'] != 'Penalty']
+
+    _ = sns.lmplot(data=tee_shots_no_penalty, x='distanceLeft', y='shotsRemaining', hue='toSurface', lowess=True)
     plt.show()
-    _ = sns.lmplot(data=tee_shots, x='distanceLeft', y='shotsRemaining', hue='toSurface')
+    _ = sns.lmplot(data=tee_shots_no_penalty, x='distanceLeft', y='shotsRemaining', hue='toSurface')
+    plt.show()
+
+    grouped_tee = tee_shots.groupby(['distanceLeft5ydBin', 'toSurface']).mean().reset_index()
+    _ = sns.lmplot(data=grouped_tee[grouped_tee['distanceLeft'] < 10000], x='distanceLeft', y='shotsRemaining',
+                   hue='toSurface', lowess=True)
+    plt.show()
+    _ = sns.lmplot(data=grouped_tee[grouped_tee['distanceLeft'] < 10000], x='distanceLeft', y='shotsRemaining',
+                   hue='toSurface')
     plt.show()
 
     _ = sns.lmplot(data=app_shots, x='distanceLeft', y='shotsRemaining', hue='toSurface', lowess=True)
@@ -265,10 +275,7 @@ if __name__ == '__main__':
     _ = sns.lmplot(data=lng_putts, x='distanceLeft', y='shotsRemaining')
     plt.show()
 
-    _ = sns.lmplot(data=sht_putts, x='distanceLeft', y='shotsRemaining', lowess=True)
-    plt.show()
-    _ = sns.lmplot(data=sht_putts, x='distanceLeft', y='shotsRemaining')
-    plt.show()
+    tournament_df.head()
 
     # for name, hole in tee_shots.groupby('holeNum'):
     #     # _ = sns.histplot(data=hole, x='shotsRemaining', hue='toSurface', kde=True,

@@ -26,7 +26,6 @@ class TournamentScraper:
                                '/leaderboard.html'
         self.successfully_scraped = 0
         self.tournament_id = None
-        self._run_thrus = 0
 
         # create place holder dictionaries for data once scraped
         self._course_ids = set()
@@ -35,8 +34,9 @@ class TournamentScraper:
         self._course_general_dict = {}
         self._course_meta_dict = {}
         self._player_round_dict = {}
-        self._unsuccessful_player_scrape = {}
+        self._unsuccessful_player_round_scrape = {}
         self._course_requests = {}
+        self._row_dict = {}
 
         # use this default dictionary as template for wire requests
         self.template_wire_html_dict = {
@@ -118,10 +118,8 @@ class TournamentScraper:
                 'totalYards': findKeyInJSON(course_desc, 'yards')
             }
 
-    def _scrapePlayerDetail(self, player_key, round_detail_json):
+    def _scrapePlayerDetail(self, main_player_id, round_num, round_detail_json):
         """Insert into dictionaries the data from the player round detail JSON"""
-        main_player_id = player_key.split()[0]
-        round_num = player_key.split()[1]
 
         """Scrape data from the player round specific JSON"""
         if main_player_id in self._player_round_dict and round_num in self._player_round_dict[main_player_id]:
@@ -171,7 +169,7 @@ class TournamentScraper:
                 'courseId': findKeyInJSON(round_detail_json, 'courseId'),
                 'playedWith': [other_id for other_id in player_hole_dict.keys() if other_id != player_id]
             }
-        self._unsuccessful_player_scrape.pop(player_key, None)
+        self._unsuccessful_player_round_scrape.pop(' '.join([main_player_id, round_num]), None)
 
     def _scrapeCourseDetail(self, c_id, course_detail_json):
         """Insert into dictionaries from the course detail JSON"""
@@ -232,11 +230,11 @@ class TournamentScraper:
         if course_general_json:
             self._scrapeCourseGeneral(course_general_json)
 
-    def _getPlayerLevelJSON(self, player_key, req_str):
+    def _getPlayerLevelJSON(self, req_str, main_player_id, round_num):
         """Get player level details from the JSON request string"""
         round_detail_json = self.web_driver.wireRequestToJSON(req_str)
         if round_detail_json:
-            self._scrapePlayerDetail(player_key, round_detail_json)
+            self._scrapePlayerDetail(main_player_id, round_num, round_detail_json)
             return True
         else:
             return False
@@ -270,6 +268,7 @@ class TournamentScraper:
     def _scrapeThroughPlayerRow(self, row):
         """Each player row will need to be clicked and then each round will need to show play by play data"""
 
+        player_reqs = []
         # get player's shot information chart open on url
         _ = row.location_once_scrolled_into_view
         main_player_id = re.findall(r'\d+', row.get_attribute('class'))[0]
@@ -278,22 +277,34 @@ class TournamentScraper:
                                                                    (By.CLASS_NAME, 'player-name-col')),
                                                                'Error getting player column to click\n{}')
         if player_name_col_button is None:
-            return None
+            return player_reqs
         _ = player_name_col_button.location_once_scrolled_into_view
         player_name_col_button.click()
 
+        # get the player drawer that opens
+        player_drawer = self.web_driver.webDriverWait(row.parent,
+                                                      EC.visibility_of_element_located(
+                                                          (By.ID, 'playerDrawer{}'.format(main_player_id))),
+                                                      'Error getting player drawer\n{}')
+        if player_drawer is None:
+            return player_reqs
         # get round by round data by clicking player round buttons
-        round_selector = self.web_driver.webDriverWait(row.parent,
+        round_selector = self.web_driver.webDriverWait(player_drawer,
                                                        EC.visibility_of_element_located(
                                                            (By.CLASS_NAME, 'round-selector')),
                                                        'Error getting round selector\n{}')
         if round_selector is None:
-            return None
-        round_buttons = round_selector.find_elements_by_class_name('round')
+            return player_reqs
+
+        last_round = round_selector.find_element_by_class_name('round.active').text
+        self.web_driver.webDriverWait(round_selector,
+                                      EC.element_to_be_clickable(
+                                          (By.CLASS_NAME, 'round')),
+                                      'Error getting round button to click\n{}')
+        rounds = round_selector.find_elements_by_class_name('round')
 
         # go round by round to scrape data
-        player_requests = {}
-        for round_button in round_buttons:
+        for round_button in rounds:
             round_num = round_button.text
             if main_player_id in self._player_round_dict and round_num in self._player_round_dict[main_player_id]:
                 self._logger.info(
@@ -301,27 +312,30 @@ class TournamentScraper:
                 continue
 
             self._logger.info('Getting JSON wire for round {} from player ID {}'.format(round_num, main_player_id))
-            round_button.click()
-            self.web_driver.getDriver().implicitly_wait(.1)
-            player_key = main_player_id + ' ' + round_num
+            player_reqs.append(
+                {'PlayerID': main_player_id,
+                 'RoundNum': round_num,
+                 'Wire':
+                     self.template_wire_html_dict['round_detail']
+                         .replace('PGA_YEAR', self._pga_year)
+                         .replace('TOURNAMENT_ID', self.tournament_id)
+                         .replace('ROUND_NUM', round_num)
+                         .replace('MAIN_PLAYER_ID', main_player_id)})
 
-            player_requests[player_key] = self.template_wire_html_dict[
-                'round_detail'] \
-                .replace('PGA_YEAR', self._pga_year) \
-                .replace('TOURNAMENT_ID', self.tournament_id) \
-                .replace('ROUND_NUM', round_num) \
-                .replace('MAIN_PLAYER_ID', main_player_id)
+            if round_num != last_round:
+                self.web_driver.getDriver().implicitly_wait(.1)
+                round_button.click()
 
         # this closes the player's shot information chart
         # player_name_col_button.click()
-        return player_requests
+        return player_reqs
 
     def _checkScrapeResults(self):
         """After getting all JSON and converting to dictionaries, check to see how we did"""
         if len(self._player_round_dict) == len(self._player_meta_dict):
             self.successfully_scraped = 100
-            self._logger.info('Successfully scraped data for all players in tournament {} {}'.format(self._pga_year,
-                                                                                                     self._pga_tournament))
+            self._logger.info('Successfully scraped data for all players in tournament {} {}'
+                              .format(self._pga_year, self._pga_tournament))
         elif len(self._player_round_dict) == 0:
             self._logger.info(
                 'Unsuccessfully scraped data for tournament {} {}'.format(self._pga_year, self._pga_tournament))
@@ -332,7 +346,7 @@ class TournamentScraper:
                                      self._pga_year,
                                      self._pga_tournament))
             self._logger.info(
-                'Player rows unsuccessfully scraped are:\n{}'.format(self._unsuccessful_player_scrape.keys()))
+                'Player rows unsuccessfully scraped are:\n{}'.format(self._unsuccessful_player_round_scrape.keys()))
 
     def runScrape(self):
         """Main function for running the scrape, get all necessary info from the page, iterate through
@@ -340,92 +354,88 @@ class TournamentScraper:
         self._logger.info(
             '\nRunning Scrape for {} {}\nURL is {}\n'.format(self._pga_year, self._pga_tournament,
                                                              self._tournament_url))
-        self._run_thrus += 1
         self.web_driver.goToURL(self._tournament_url)
-        if self.tournament_id is not None or self._getTournamentID():
+        if not self._getTournamentID():
+            return False
 
-            row_lines = self.web_driver.webDriverWait(self.web_driver.getDriver(),
-                                                      EC.visibility_of_all_elements_located(
-                                                          (By.CSS_SELECTOR, 'tr.line-row.line-row')),
-                                                      'Error locating player elements on page\n{}')
+        row_lines = self.web_driver.webDriverWait(self.web_driver.getDriver(),
+                                                  EC.visibility_of_all_elements_located(
+                                                      (By.CSS_SELECTOR, 'tr.line-row.line-row')),
+                                                  'Error locating player elements on page\n{}')
+        if row_lines is None:
+            return False
 
-            # request string for tournament detail
-            tournament_req_str = self.template_wire_html_dict['tournament_detail'].replace(
-                'PGA_YEAR', self._pga_year).replace('TOURNAMENT_ID', self.tournament_id)
-            # scrape JSON of tournament detail
-            if not self._getTournamentJSON(tournament_req_str):
-                if self._run_thrus < 3:
-                    self._logger.warn('Failed getting tournament details, will retry this scrape again.')
-                    return self.runScrape()
-                else:
-                    return False
+        # request string for tournament detail
+        tournament_req_str = self.template_wire_html_dict['tournament_detail'].replace(
+            'PGA_YEAR', self._pga_year).replace('TOURNAMENT_ID', self.tournament_id)
+        # scrape JSON of tournament detail
+        if not self._getTournamentJSON(tournament_req_str):
+            self._logger.error('Failed getting tournament details.')
+            return False
 
-            # request string for course general info
-            course_gen_req_str = self.template_wire_html_dict['course_general'].replace(
-                'TOURNAMENT_ID', self.tournament_id)
-            # scrape JSON of course general
-            self._getCourseGeneralJSON(course_gen_req_str)
+        # request string for course general info
+        course_gen_req_str = self.template_wire_html_dict['course_general'].replace(
+            'TOURNAMENT_ID', self.tournament_id)
+        # scrape JSON of course general
+        self._getCourseGeneralJSON(course_gen_req_str)
 
-            if row_lines:
-                unsuccessful_rows = set()
-                successive_failures = 0
-                # split up player JSON requests because some data overlaps in the play by play JSON
-                for i in range(3):
-                    # run first time through and keep track of unsuccessful scrapes
-                    for row_num, row in enumerate(row_lines[i::3]):
-                        row_num = i + (row_num * 3)
-                        # if row_num > 9:
-                        #     continue
-                        player_requests = self._scrapeThroughPlayerRow(row)
-                        if player_requests is not None:
-                            result = 'Successfully'
-                            for player_key, req_str in player_requests.items():
-                                if not self._getPlayerLevelJSON(player_key, req_str):
-                                    self._unsuccessful_player_scrape[player_key] = req_str
-                                    self._logger.warning(
-                                        'Unsuccessfully retrieved JSON for row number {}, player ID {} -- round '
-                                        'number {}. Will retry all rounds later.\n'
-                                            .format(row_num, player_key.split()[0], player_key.split()[1]))
-                                    unsuccessful_rows.add(row_num)
-                                    result = 'Unsuccessfully'
-                                    successive_failures += 1
-                                    break
-                                else:
-                                    successive_failures = 0
-                        else:
-                            unsuccessful_rows.add(row_num)
-                            successive_failures += 1
-                            result = 'Unsuccessfully'
-
-                        self._logger.info('{} iterated over row {} the first time'.format(result, str(row_num)))
-                        # Something's wrong
-                        if successive_failures > 5:
-                            self._logger.warn(
-                                'Had 5 successive failures while getting player round JSON, exiting scrape')
-                            return False
-
-                # can get course detail data once all players have been added with the courses they played
-                self._getCourseDetailJSON()
-
-                # run through a second time with all the rows that were unsuccessful at first
-                for row_num in unsuccessful_rows:
-                    player_requests = self._scrapeThroughPlayerRow(row_lines[row_num])
-                    if player_requests is not None:
-                        result = 'Successfully'
-                        for player_key, req_str in player_requests.items():
-                            if not self._getPlayerLevelJSON(player_key, req_str):
-                                self._unsuccessful_player_scrape[player_key] = req_str
-                                self._logger.warning('Unsuccessfully retrieved JSON for row number {},'
-                                                     ' player ID {} -- round number {}.\n'
-                                                     .format(row_num, player_key.split()[0], player_key.split()[1]))
-                                result = 'Unsuccessfully'
+        successive_failures = 0
+        # split up player JSON requests because some data overlaps in the play by play JSON
+        for i in range(3):
+            remove_rows = []
+            # run first time through and keep track of unsuccessful scrapes
+            for row_num, row in enumerate(row_lines[i::3]):
+                row_num = i + (row_num * 3)
+                # if row_num > 9:
+                #     continue
+                if row_num not in self._row_dict:
+                    self._logger.info('Iterating over row {}'.format(row_num))
+                    self._row_dict[row_num] = self._scrapeThroughPlayerRow(row)
+            for row_num, player_requests in self._row_dict.items():
+                for request in player_requests:
+                    req_str = request['Wire']
+                    main_player_id = request['PlayerID']
+                    round_num = request['RoundNum']
+                    if not self._getPlayerLevelJSON(req_str, main_player_id, round_num):
+                        self._unsuccessful_player_round_scrape[' '.join([main_player_id, round_num])] = req_str
+                        self._logger.warning(
+                            'Unsuccessfully retrieved JSON for player ID {} -- round '
+                            'number {}. Will retry this row later.\n'.format(main_player_id, round_num))
+                        successive_failures += 1
+                        break
                     else:
-                        result = 'Unsuccessfully'
-                    self._logger.info('{} iterated over row {} the second time'.format(result, str(row_num)))
+                        successive_failures = 0
+                else:
+                    remove_rows.append(row_num)
 
-                self._checkScrapeResults()
-                return True
-        return False
+                # Something's wrong
+                if successive_failures > 5:
+                    self._logger.warn(
+                        'Had 5 successive failures while getting player round JSON, exiting scrape')
+                    return False
+            # remove successful rows
+            for row_num in remove_rows:
+                del self._row_dict[row_num]
+
+        # can get course detail data once all players have been added with the courses they played
+        self._getCourseDetailJSON()
+
+        # run through a second time with all the rows that were unsuccessful at first
+        for row_num in self._row_dict.keys():
+            self._logger.info('Iterating over row {}'.format(row_num))
+            self._row_dict[row_num] = self._scrapeThroughPlayerRow(row_lines[row_num])
+        for row_num, player_requests in self._row_dict.items():
+            for request in player_requests:
+                req_str = request['Wire']
+                main_player_id = request['PlayerID']
+                round_num = request['RoundNum']
+                if not self._getPlayerLevelJSON(req_str, main_player_id, round_num):
+                    self._logger.warning(
+                        'Unsuccessfully retrieved JSON for player ID {} -- round '
+                        'number {} Final attempt.\n'.format(main_player_id, round_num))
+
+        self._checkScrapeResults()
+        return True
 
     def __convertPlayerRoundToMongoDBCollection(self):
         player_round_collection = []

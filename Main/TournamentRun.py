@@ -36,19 +36,20 @@ class TournamentRun:
         pass in a driver if one exists"""
         scraped_tournament = TournamentScraper(self.name, self.year, driver)
         mongo_collection = None
-        if scraped_tournament.runScrape():
-            self._logger.info('{}\n'.format(scraped_tournament))
-
-            scraped_collection = scraped_tournament.convertDictsToMongoDBCollection()
-            mongo_collection = {'Tournament Scrape Status': {'tournamentName': self.name,
-                                                             'pgaYear': self.year,
-                                                             'tournamentID': scraped_tournament.tournament_id,
-                                                             'percentPlayersScraped': '{:.2f}'.format(
-                                                                 scraped_tournament.successfully_scraped)},
-                                'Player Rounds': scraped_collection[0],
-                                'Player Metadata': scraped_collection[1],
-                                'Course Metadata': scraped_collection[2],
-                                'Tournament Details': scraped_collection[3]}
+        for i in range(3):
+            if scraped_tournament.runScrape():
+                self._logger.info('Attempt {} successful at scraping {}\n'.format(str(i + 1), scraped_tournament))
+                scraped_collection = scraped_tournament.convertDictsToMongoDBCollection()
+                mongo_collection = {'Tournament Scrape Status': {'tournamentName': self.name,
+                                                                 'pgaYear': self.year,
+                                                                 'tournamentID': scraped_tournament.tournament_id,
+                                                                 'percentPlayersScraped': '{:.2f}'.format(
+                                                                     scraped_tournament.successfully_scraped)},
+                                    'Player Rounds': scraped_collection[0],
+                                    'Player Metadata': scraped_collection[1],
+                                    'Course Metadata': scraped_collection[2],
+                                    'Tournament Details': scraped_collection[3]}
+                break
         else:
             self._logger.error('Scraping for -- {} -- failed. Adding to failure list.\n'.format(scraped_tournament))
             self.failed_scrape_list.append({'Name': self.name, 'Year': self.year})
