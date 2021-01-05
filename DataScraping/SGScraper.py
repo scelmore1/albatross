@@ -47,7 +47,7 @@ class SGScraper:
             'sgTOT': sg_stats[6]
         })
 
-    def runScrape(self):
+    def runScrape(self, years_to_scrape):
         """"""
         self._logger.info(
             'Go to SG Scrape url {}\n'.format(self._sg_url))
@@ -68,7 +68,7 @@ class SGScraper:
                 self.year_options = driver.find_elements_by_class_name('yearoptions')
                 for year in reversed(self.year_options):
                     year_name = year.text
-                    if int(year_name) < 2018:
+                    if int(year_name) not in years_to_scrape:
                         break
 
                     self._logger.info('\nRunning SG Scrape for {} {}'.format(year_name, tournament_name))

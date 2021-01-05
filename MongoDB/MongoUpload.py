@@ -137,3 +137,67 @@ class MongoUploadSG:
 
     def _getUploadStatus(self):
         return 'SG Stats Uploaded: {} of {} possible\n'.format(self._sg_stats_upload, self._sg_stats_overall)
+
+
+class MongoUploadDF:
+
+    def __init__(self, tournament_db, tournament_name):
+        """For uploading tournament DF to MongoDB"""
+        self._tournament_db = tournament_db
+        self._name = tournament_name
+        self._logger = MyLogger('MongoDB Tournament DF {}'.format(self._name),
+                                'tournaments/DFs/{}/logs/tournament_mongodb.log'.format(self._name),
+                                logging.INFO).getLogger()
+        self._tournament_df_upload = False
+        self._raw_sg_df_upload = False
+
+    def __repr__(self):
+        return 'MongoDB DF Upload Status: {}'.format(self._getUploadStatus())
+
+    def uploadTournamentDF(self, upload_dict):
+        try:
+            tournament_name = upload_dict['tournamentName']
+            pga_year = upload_dict['pgaYear']
+            course_id = upload_dict['courseID']
+            round_num = upload_dict['roundNum']
+            self._logger.info('Attempting to upload {} {}, course {}, round #{}'.
+                              format(pga_year, tournament_name, course_id, round_num))
+            query = {'tournamentName': tournament_name, 'courseID': course_id,
+                     'pgaYear': pga_year, 'roundNum': round_num}
+            values = {'$set': upload_dict}
+            result = self._tournament_db.tournament_df.update(query, values, upsert=True)
+            if result is not None:
+                if not result['updatedExisting']:
+                    self._logger.info('Inserted Tournament DF into collection with id {}\n'.format(result['upserted']))
+                else:
+                    self._logger.info('Updated existing Tournament DF with key {}\n'.format(
+                        {'tournamentName': tournament_name, 'courseID': course_id,
+                         'pgaYear': pga_year, 'roundNum': round_num}))
+        except Exception as e:
+            self._logger.error('Problem uploading DF {}'.format(e), exc_info=True)
+        else:
+            self._tournament_df_upload = True
+
+    def uploadRawSG_DF(self, upload_dict):
+        try:
+            tournament_name = upload_dict['tournamentName']
+            pga_year = upload_dict['pgaYear']
+            self._logger.info('Attempting to upload {} {}'.
+                              format(pga_year, tournament_name))
+            query = {'tournamentName': tournament_name, 'pgaYear': pga_year}
+            values = {'$set': upload_dict}
+            result = self._tournament_db.raw_sg_df.update(query, values, upsert=True)
+            if result is not None:
+                if not result['updatedExisting']:
+                    self._logger.info('Inserted Raw SG DF into collection with id {}\n'.format(result['upserted']))
+                else:
+                    self._logger.info('Updated existing Raw SG DF with key {}\n'.format(
+                        {'tournamentName': tournament_name, 'pgaYear': pga_year}))
+        except Exception as e:
+            self._logger.error('Problem uploading DF {}'.format(e), exc_info=True)
+        else:
+            self._raw_sg_df_upload = True
+
+    def _getUploadStatus(self):
+        return 'Tournament DF Upload: {}\nRaw SG DF Upload: {}\n'.format(self._tournament_df_upload,
+                                                                         self._raw_sg_df_upload)

@@ -26,7 +26,7 @@ class SGRun:
     def __getMongoDBCollectionsFromScrape(self):
         sg_scraper = SGScraper()
         mongo_collection = None
-        if sg_scraper.runScrape():
+        if sg_scraper.runScrape(['2016', '2017']):
             self._logger.info('{}\n'.format(sg_scraper))
             mongo_collection = sg_scraper.getSGCollection()
 
