@@ -68,8 +68,8 @@ class SGScraper:
                 self.year_options = driver.find_elements_by_class_name('yearoptions')
                 for year in reversed(self.year_options):
                     year_name = year.text
-                    if int(year_name) not in years_to_scrape:
-                        break
+                    if year_name not in years_to_scrape:
+                        continue
 
                     self._logger.info('\nRunning SG Scrape for {} {}'.format(year_name, tournament_name))
                     year.click()
