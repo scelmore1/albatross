@@ -3,16 +3,14 @@ import logging
 import pymongo
 
 from Logging.MyLogger import MyLogger
+from config import MY_MONGO_DB_KEY
 
 
 class MongoInitialization:
 
     def __init__(self, called_from):
         """For connecting and set up to MongoDB"""
-        self.connection_str = "mongodb+srv://scelmore1:albatross@cluster1.olrfe.mongodb.net/tournament_db?retryWrites" \
-                              "=true" \
-                              "&w" \
-                              "=majority"
+        self.connection_str = '{}'.format(MY_MONGO_DB_KEY)
         self._logger = MyLogger('MongoDB', 'MongoDB/logs/mongodb.log', logging.INFO).getLogger()
         self._logger.info('Connecting to MongoDB at {}\n'.format(self.connection_str))
         self._client = pymongo.MongoClient(self.connection_str)
