@@ -12,7 +12,7 @@ class MongoInitialization:
         """For connecting and set up to MongoDB"""
         self.connection_str = '{}'.format(MY_MONGO_DB_KEY)
         self._logger = MyLogger('MongoDB', 'MongoDB/logs/mongodb.log', logging.INFO).getLogger()
-        self._logger.info('Connecting to MongoDB at {}\n'.format(self.connection_str))
+        self._logger.info('Connecting to MongoDB...\n')
         self._client = pymongo.MongoClient(self.connection_str)
         self._tournament_db = self._client.tournament_db
         self._logger.info('Client description {}\n'.format(self._client))
