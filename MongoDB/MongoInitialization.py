@@ -1,5 +1,4 @@
 import logging
-
 import pymongo
 
 from Logging.MyLogger import MyLogger
