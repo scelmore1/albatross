@@ -5,14 +5,14 @@ from Logging.MyLogger import MyLogger
 
 class MongoUploadTournament:
 
-    def __init__(self, tournament_db, tournament_year, tournament_name):
+    def __init__(self, mongo_obj, tournament_year, tournament_name):
         """For uploading tournament scrape collection objects to MongoDB"""
-        self._tournament_db = tournament_db
+        self._mongo_obj = mongo_obj
         self._year = tournament_year
         self._name = tournament_name
-        self._logger = MyLogger('MongoDB {} {}'.format(self._year, self._name),
-                                'tournaments/{}_{}/logs/tournament_mongodb.log'.format(self._year, self._name),
-                                logging.INFO).getLogger()
+        self._logger = MyLogger(self.__class__.__name__, logging.INFO,
+                                'tournaments/{}/{}/logs/tournament_mongodb.log'.format(self._name, self._year)
+                                ).getLogger()
         self._tournament_detail_upload = False
         self._player_metadata_upload = 0
         self._player_metadata_overall = 0
@@ -27,7 +27,7 @@ class MongoUploadTournament:
         return 'MongoDB Tournament Upload Status: {}'.format(self._getUploadStatus())
 
     def uploadTournamentDetails(self, tournament_details):
-        result = self._tournament_db.tournament_detail.replace_one(
+        result = self._mongo_obj.tournament_detail_col.replace_one(
             {'tournamentID': tournament_details['tournamentID'], 'pgaYear': tournament_details['pgaYear']},
             tournament_details, upsert=True)
         if result is not None:
@@ -42,8 +42,8 @@ class MongoUploadTournament:
     def uploadPlayerMetadata(self, player_metadata):
         for player in player_metadata:
             self._player_metadata_overall += 1
-            if self._tournament_db.player_metadata.find_one({"playerID": player['playerID']}) is None:
-                result = self._tournament_db.player_metadata.insert_one(player)
+            if self._mongo_obj.player_meta_col.find_one({"playerID": player['playerID']}) is None:
+                result = self._mongo_obj.player_meta_col.insert_one(player)
                 if result is not None:
                     self._logger.info(
                         'Inserted player metadata into collection with id {}\n'.format(result.inserted_id))
@@ -52,7 +52,7 @@ class MongoUploadTournament:
     def uploadPlayerRounds(self, player_rounds):
         for player in player_rounds:
             self._player_round_overall += 1
-            result = self._tournament_db.player_round.replace_one(
+            result = self._mongo_obj.player_round_col.replace_one(
                 {'playerID': player['playerID'], 'tournamentID': player['tournamentID'],
                  'pgaYear': player['pgaYear'], 'roundNumber': player['roundNumber']}, player, upsert=True)
             if result is not None:
@@ -67,7 +67,7 @@ class MongoUploadTournament:
     def uploadCourseMetadata(self, course_metadata):
         for course in course_metadata:
             self._course_metadata_overall += 1
-            result = self._tournament_db.course_metadata.replace_one(
+            result = self._mongo_obj.course_meta_col.replace_one(
                 {'courseID': course['courseID'], 'tournamentID': course['tournamentID'],
                  'pgaYear': course['pgaYear']}, course, upsert=True)
             if result is not None:
@@ -81,7 +81,7 @@ class MongoUploadTournament:
                 self._course_metadata_upload += 1
 
     def uploadTournamentScrapeStatus(self, scrape_status):
-        result = self._tournament_db.tournament_scrape_status.replace_one(
+        result = self._mongo_obj.tournament_scrape_status_col.replace_one(
             {'tournamentID': scrape_status['tournamentID'], 'pgaYear': scrape_status['pgaYear']},
             scrape_status, upsert=True)
         if result is not None:
@@ -108,12 +108,11 @@ class MongoUploadTournament:
 
 class MongoUploadSG:
 
-    def __init__(self, tournament_db):
+    def __init__(self, mongo_obj):
         """For uploading SG collection objects to MongoDB"""
-        self._tournament_db = tournament_db
-        self._logger = MyLogger('MongoDB SG',
-                                'tournaments/SG/logs/sg_mongodb.log',
-                                logging.INFO).getLogger()
+        self._mongo_obj = mongo_obj
+        self._logger = MyLogger(self.__class__.__name__, logging.INFO,
+                                'tournaments/SG/logs/sg_mongodb.log').getLogger()
         self._sg_stats_upload = 0
         self._sg_stats_overall = 0
 
@@ -123,7 +122,7 @@ class MongoUploadSG:
     def uploadSGStats(self, sg_stats_list):
         for sg_stats in sg_stats_list:
             self._sg_stats_overall += 1
-            result = self._tournament_db.sg_stats.replace_one(
+            result = self._mongo_obj.sg_stats_col.replace_one(
                 {'playerName': sg_stats['playerName'], 'tournamentName': sg_stats['tournamentName'],
                  'pgaYear': sg_stats['pgaYear']}, sg_stats, upsert=True)
             if result is not None:
@@ -141,13 +140,12 @@ class MongoUploadSG:
 
 class MongoUploadDF:
 
-    def __init__(self, tournament_db, tournament_name):
+    def __init__(self, mongo_obj, tournament_name):
         """For uploading tournament DF to MongoDB"""
-        self._tournament_db = tournament_db
+        self._mongo_obj = mongo_obj
         self._name = tournament_name
-        self._logger = MyLogger('MongoDB Tournament DF {}'.format(self._name),
-                                'tournaments/DFs/{}/logs/tournament_mongodb.log'.format(self._name),
-                                logging.INFO).getLogger()
+        self._logger = MyLogger(self.__class__.__name__, logging.INFO,
+                                'tournaments/DFs/{}/logs/tournament_mongodb.log'.format(self._name)).getLogger()
         self._tournament_df_upload = False
         self._raw_sg_df_upload = False
 
@@ -165,7 +163,7 @@ class MongoUploadDF:
             query = {'tournamentName': tournament_name, 'courseID': course_id,
                      'pgaYear': pga_year, 'roundNum': round_num}
             values = {'$set': upload_dict}
-            result = self._tournament_db.tournament_df.update(query, values, upsert=True)
+            result = self._mongo_obj.tournament_df_col.update(query, values, upsert=True)
             if result is not None:
                 if not result['updatedExisting']:
                     self._logger.info('Inserted Tournament DF into collection with id {}\n'.format(result['upserted']))
@@ -186,7 +184,7 @@ class MongoUploadDF:
                               format(pga_year, tournament_name))
             query = {'tournamentName': tournament_name, 'pgaYear': pga_year}
             values = {'$set': upload_dict}
-            result = self._tournament_db.raw_sg_df.update(query, values, upsert=True)
+            result = self._mongo_obj.raw_sg_df_col.update(query, values, upsert=True)
             if result is not None:
                 if not result['updatedExisting']:
                     self._logger.info('Inserted Raw SG DF into collection with id {}\n'.format(result['upserted']))
@@ -201,3 +199,48 @@ class MongoUploadDF:
     def _getUploadStatus(self):
         return 'Tournament DF Upload: {}\nRaw SG DF Upload: {}\n'.format(self._tournament_df_upload,
                                                                          self._raw_sg_df_upload)
+
+
+class MongoUploadStrokeDistance:
+
+    def __init__(self, mongo_obj):
+        """For uploading stroke distance data to MongoDB"""
+        self._mongo_obj = mongo_obj
+        self._logger_obj = MyLogger(self.__class__.__name__, logging.INFO)
+        self._logger = self._logger_obj.getLogger()
+        self._tournaments_uploaded = []
+
+    def __repr__(self):
+        return 'MongoDB DF Upload Status: {}'.format(self._getUploadStatus())
+
+    def _getUploadStatus(self):
+        return 'Tournaments Uploaded: {}\n'.format(self._tournaments_uploaded)
+
+    def addTournament(self, tournament_stroke_distance_dict) -> bool:
+        """Create a new document for the given tournament and pga_year stroke and distance data. This data will be
+        aggregated on download to create a universal stroke and distance DF"""
+        try:
+            tournament_name = tournament_stroke_distance_dict['tournamentName']
+            pga_year = tournament_stroke_distance_dict['pgaYear']
+            self._logger_obj.replaceFileHandler('tournaments/stroke_distance/{}/logs/stroke_distance_mongodb.log'
+                                                .format(tournament_name), 'a')
+            self._logger.info('Adding {} {} to the stroke distance collection'.format(pga_year, tournament_name))
+
+            query = {'tournamentName': tournament_name, 'pgaYear': pga_year}
+            values = {'$set': tournament_stroke_distance_dict}
+            result = self._mongo_obj.stroke_distance_tournament_col.update(query, values, upsert=True)
+            if result is not None:
+                if not result['updatedExisting']:
+                    self._logger.info('Inserted Stroke Distance document into collection with id {}\n'.
+                                      format(result['upserted']))
+                else:
+                    self._logger.info('Updated existing Stroke Distance document with key {}\n'.format(
+                        {'tournamentName': tournament_name, 'pgaYear': pga_year}))
+            else:
+                return False
+        except Exception as e:
+            self._logger.error('Problem uploading Stroke Distance doc {}'.format(e), exc_info=True)
+            return False
+        else:
+            self._tournaments_uploaded.append((pga_year, tournament_name))
+            return True

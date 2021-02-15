@@ -39,15 +39,16 @@ for i, cut in enumerate(cut_line_info, start=1):
         'cutPaidCount': cut['paid_players_making_cut']
     }
 
-if pga_year != nested_lookup('year', tourn_detail_json)[0]:
+if pga_year != nested_lookup('pga_year', tourn_detail_json)[0]:
     print('Error: Non-matching PGA years. User Input {}; JSON {}'.format(pga_year,
-                                                                         nested_lookup('year', tourn_detail_json)[0]))
+                                                                         nested_lookup('pga_year', tourn_detail_json)[
+                                                                             0]))
 
 tournament_info_dict = {
     'tournamentId': tournament_id,
     'cutInfo': cut_dict,
     'format': nested_lookup('format', tourn_detail_json)[0],
-    'pgaYear': nested_lookup('year', tourn_detail_json)[0],
+    'pgaYear': nested_lookup('pga_year', tourn_detail_json)[0],
     'status': nested_lookup('roundState', tourn_detail_json)[0],
     'playoff': nested_lookup('playoffPresent', tourn_detail_json)[0],
     'dates': driver.find_elements_by_xpath('.//span[@class = "dates"]')[0].text

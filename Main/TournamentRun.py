@@ -6,7 +6,7 @@ class TournamentRun:
     failed_scrape_list = []
 
     def __init__(self, name, year, mongo_client, logger):
-        """Get tournament name and year from .csv file to initialize class"""
+        """Get tournament name and pga_year from .csv file to initialize class"""
         self.name = name
         self.year = str(year)
         self._mongo_client = mongo_client
@@ -63,7 +63,7 @@ class TournamentRun:
         return mongo_collection
 
     def __uploadMongoDBCollections(self, collection_dict):
-        mongo_upload = MongoUploadTournament(self._mongo_client.getTournamentDB(), self.year, self.name)
+        mongo_upload = MongoUploadTournament(self._mongo_client, self.year, self.name)
         for key, value in collection_dict.items():
             if key == 'Tournament Scrape Status':
                 mongo_upload.uploadTournamentScrapeStatus(value)

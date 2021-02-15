@@ -14,8 +14,8 @@ tournaments_path = 'tournaments/TournamentList.csv'
 
 if __name__ == '__main__':
     max_drivers = 2
-    main_logger = MyLogger('Main', 'Main/logs/main.log', logging.INFO).getLogger()
-    mongo_obj = MongoInitialization('scraper')
+    main_logger = MyLogger('Main', logging.INFO, 'Main/logs/main.log').getLogger()
+    mongo_obj = MongoInitialization()
     tournament_df = pd.read_csv(tournaments_path, delimiter=',')
     tournament_df.columns = tournament_df.columns.str.strip()
     tournament_df['Name'] = tournament_df['Name'].str.strip()

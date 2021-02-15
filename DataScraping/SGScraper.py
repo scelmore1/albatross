@@ -9,7 +9,7 @@ from SeleniumDriver.WebDriver import wait_for_text_to_match
 
 
 class SGScraper:
-    """Given a tournament and year, this scrapes pgatour.com tournament result
+    """Given a tournament and pga_year, this scrapes pgatour.com tournament result
      page to create json files containing data on tournament info and player course_hole by course_hole shots"""
 
     def __init__(self):
@@ -23,7 +23,7 @@ class SGScraper:
         self._file_handler = 'tournaments/SG/logs/sg_scape.log'
 
         # initialize logger
-        self._logger = MyLogger(self.__class__.__name__, self._file_handler, logging.INFO, 'w').getLogger()
+        self._logger = MyLogger(self.__class__.__name__, logging.INFO, self._file_handler, 'w').getLogger()
 
         # initialize driver
         self.web_driver = WebDriver(self._logger)

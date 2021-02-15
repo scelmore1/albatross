@@ -15,11 +15,11 @@ def findKeyInJSON(json_body, key):
 
 
 class TournamentScraper:
-    """Given a tournament and year, this scrapes pgatour.com tournament result
+    """Given a tournament and pga_year, this scrapes pgatour.com tournament result
      page to create json files containing data on tournament info and player course_hole by course_hole shots"""
 
     def __init__(self, pga_tournament, pga_year, driver=None):
-        """Initialize scraper with tournament, year, optional logger name, wire requests dict, web driver"""
+        """Initialize scraper with tournament, pga_year, optional logger name, wire requests dict, web driver"""
         self._pga_tournament = pga_tournament
         self._pga_year = pga_year
         self._tournament_url = 'https://www.pgatour.com/competition/' + pga_year + '/' + pga_tournament + \
@@ -47,12 +47,12 @@ class TournamentScraper:
         }
 
         # all I/O done in tournaments/'pga_year'_'tournament_name' directory
-        self.dir = 'tournaments/' + self._pga_year + '_' + self._pga_tournament + '/'
+        self.dir = 'tournaments/' + self._pga_tournament + '/' + self._pga_year + '/'
         self._file_handler = self.dir + 'logs/tournament_scape.log'
 
         # initialize logger
         self._logger = MyLogger(self.__class__.__name__ + ' ' + self._pga_year + ' ' + self._pga_tournament,
-                                self._file_handler, logging.INFO, 'a').getLogger()
+                                logging.INFO, self._file_handler, 'a').getLogger()
 
         # initialize driver
         if driver is None:
@@ -62,7 +62,7 @@ class TournamentScraper:
         self.web_driver.updateLogLocations(' ' + self._pga_year + ' ' + self._pga_tournament, self._file_handler)
 
     def __repr__(self):
-        """Print Scraper Class with year, tournament and scraped status"""
+        """Print Scraper Class with pga_year, tournament and scraped status"""
         return (self.__class__.__name__ + ' ' + self._pga_year + ' ' + self._pga_tournament
                 + '\nScrape Status: Scraped {:.2f}% of potential data'.format(self.successfully_scraped))
 
@@ -70,9 +70,9 @@ class TournamentScraper:
         """Insert into dictionaries from the detailed tournament info JSON"""
 
         # make sure pga years match
-        if self._pga_year != findKeyInJSON(tournament_detail_json, 'year'):
+        if self._pga_year != findKeyInJSON(tournament_detail_json, 'pga_year'):
             self._logger.warning('Error: Non-matching PGA years. User Input {}; JSON {}'
-                                 .format(self._pga_year, findKeyInJSON(tournament_detail_json, 'year')))
+                                 .format(self._pga_year, findKeyInJSON(tournament_detail_json, 'pga_year')))
 
         # cut line data
         cut_line_info = findKeyInJSON(tournament_detail_json, 'cutLines')
@@ -93,7 +93,7 @@ class TournamentScraper:
             'multiCourse': findKeyInJSON(tournament_detail_json, 'multiCourse'),
             'totalRounds': findKeyInJSON(tournament_detail_json, 'totalRounds'),
             'format': findKeyInJSON(tournament_detail_json, 'format'),
-            'pgaYear': findKeyInJSON(tournament_detail_json, 'year'),
+            'pgaYear': findKeyInJSON(tournament_detail_json, 'pga_year'),
             'status': findKeyInJSON(tournament_detail_json, 'roundState'),
             'playoff': findKeyInJSON(tournament_detail_json, 'playoffPresent'),
             'dates': self.web_driver.findElementByXPath('.//span[@class = "dates"]'),

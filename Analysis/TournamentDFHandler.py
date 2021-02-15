@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+
 import numpy as np
 import pandas as pd
 
@@ -8,7 +9,7 @@ from MongoDB.MongoDownload import MongoDownload
 from MongoDB.MongoUpload import MongoUploadDF
 
 
-class dfHandler:
+class TournamentDFHandler:
     max_hole_dist = 700
     max_green_dist = 50
     arg_green_dist = 30
@@ -27,7 +28,7 @@ class dfHandler:
         elif row.fromSurface == 'OTB' and row.par in [4, 5]:
             val = 'TEE'
         elif row.fromSurface in ['OGR', 'OCO']:
-            if row.startDistance > dfHandler.long_putt_dist * 12:
+            if row.startDistance > TournamentDFHandler.long_putt_dist * 12:
                 if row.fromSurface == 'OCO':
                     val = 'ARG'
                 else:
@@ -35,7 +36,7 @@ class dfHandler:
             else:
                 val = 'SHT_PUTT'
         elif row.fromSurface in ['OFW', 'ORO', 'OST', 'OIR', 'ONA', 'OTH', 'OTB', 'OWL', 'OBR', 'OWA'] \
-                and row.startDistance > (36 * dfHandler.arg_green_dist):
+                and row.startDistance > (36 * TournamentDFHandler.arg_green_dist):
             val = 'APP'
         elif row.fromSurface in ['OFW', 'ORO', 'OST', 'OIR', 'ONA', 'OTH', 'OGS', 'OWL', 'OBR', 'OWA']:
             val = 'ARG'
@@ -127,7 +128,7 @@ class dfHandler:
         year_course_hole_round = {}
         for pga_year in tournament_year_dict.keys():
             dates_str = tournament_year_dict[pga_year]['dates']
-            first_dt, last_dt = dfHandler.getDateTimes(dates_str)
+            first_dt, last_dt = TournamentDFHandler.getDateTimes(dates_str)
 
             course_dict = {}
             for course in tournament_year_dict[pga_year]['courses']:
@@ -153,24 +154,26 @@ class dfHandler:
 
     def __init__(self, mongo_obj, tournament_name_scrape, tournament_name_sg, force_create_sg=False,
                  force_create_tournament=False):
-        self._logger = MyLogger('dfHandler', 'Analysis/logs/dfHandler.log', logging.INFO).getLogger()
+        self._logger = MyLogger(self.__class__.__name__, logging.INFO,
+                                'Analysis/logs/{}.log'.format(self.__class__.__name__)).getLogger()
+        self._logger.info('Initializing Tournament DF Handler for tournament {}'.format(tournament_name_scrape))
         self._tournament_name = tournament_name_scrape
         self._mongo_obj = mongo_obj
         mongo_download = MongoDownload(self._mongo_obj)
-        self._mongo_upload_df = MongoUploadDF(self._mongo_obj.getTournamentDB(), self._tournament_name)
+        self._mongo_upload_df = MongoUploadDF(self._mongo_obj, self._tournament_name)
         self._raw_sg_df = pd.DataFrame(mongo_download.getRawSG_DF(tournament_name_scrape))
         if self._raw_sg_df.empty or force_create_sg:
-            self._logger.info('Creating New Raw SG DF')
             self._raw_sg_df = pd.DataFrame()
             self._createRawSG_DF(mongo_download.getSGStatsForTournament(tournament_name_scrape, tournament_name_sg),
                                  mongo_download.getPlayerNames())
+            self.uploadRawSG_DF()
 
         self._tournament_df = pd.DataFrame(mongo_download.getTournamentDF(tournament_name_scrape))
         if self._tournament_df.empty or force_create_tournament:
-            self._logger.info('Creating New Tournament DF')
             self._tournament_df = pd.DataFrame()
             self._createTournamentDF(mongo_download.consolidateTournamentInfo(tournament_name_scrape),
                                      mongo_download.getPlayerNames())
+            self.uploadTournamentDF()
 
     def __repr__(self):
         success = True
@@ -208,11 +211,11 @@ class dfHandler:
         hole_df['playerScore'] = player_group.shot_id.transform('max')
         hole_df['holeAvg'] = player_group.shot_id.max().mean()
         hole_df['shotsRemaining'] = player_group.cumcount(ascending=False)
-        hole_df['shotType'] = hole_df.apply(dfHandler.getShotType, axis=1)
+        hole_df['shotType'] = hole_df.apply(TournamentDFHandler.getShotType, axis=1)
         hole_df['isAdvanced'] = (hole_df['shotType'] == 'APP') & \
                                 (hole_df.distanceLeft > (self.adv_pct * hole_df.startDistance))
         hole_df['toSurface'] = hole_df.shotType.shift(-1)
-        hole_df[['toLocation', 'toSurface']] = hole_df.apply(dfHandler.getEndLocation, axis=1,
+        hole_df[['toLocation', 'toSurface']] = hole_df.apply(TournamentDFHandler.getEndLocation, axis=1,
                                                              result_type='expand')
         hole_df.drop(hole_df[hole_df.shotType == 'Penalty'].index, inplace=True)
         hole_df.loc[hole_df.toLocation == 'Penalty', 'distanceLeft'] = \
@@ -226,20 +229,21 @@ class dfHandler:
         return hole_df
 
     def _getDistanceBins(self, hole_df):
-        hole_df.loc[hole_df['shotType'] == 'TEE', 'startDistance10ydBin'] = dfHandler.getBinValues(
+        hole_df.loc[hole_df['shotType'] == 'TEE', 'startDistance10ydBin'] = TournamentDFHandler.getBinValues(
             hole_df[hole_df['shotType'] == 'TEE'].startDistance, self.max_hole_dist, 10, 'yds')
         hole_df.loc[(hole_df['shotType'] == 'TEE') | (hole_df['shotType'] == 'APP'), 'distanceLeft5ydBin'] = \
-            dfHandler.getBinValues(hole_df[(hole_df['shotType'] == 'TEE') | (hole_df['shotType'] == 'APP')].
-                                   distanceLeft, self.max_hole_dist, 5, 'yds')
+            TournamentDFHandler.getBinValues(hole_df[(hole_df['shotType'] == 'TEE') | (hole_df['shotType'] == 'APP')].
+                                             distanceLeft, self.max_hole_dist, 5, 'yds')
         hole_df.loc[hole_df['shotType'] == 'APP', 'distanceLeft1ydBin'] = \
-            dfHandler.getBinValues(hole_df[hole_df['shotType'] == 'APP'].
-                                   distanceLeft, self.max_green_dist, 1, 'yd')
-        hole_df.loc[hole_df['shotType'] != 'TEE', 'distanceLeft1ftBin'] = dfHandler.getBinValues(
+            TournamentDFHandler.getBinValues(hole_df[hole_df['shotType'] == 'APP'].
+                                             distanceLeft, self.max_green_dist, 1, 'yd')
+        hole_df.loc[hole_df['shotType'] != 'TEE', 'distanceLeft1ftBin'] = TournamentDFHandler.getBinValues(
             hole_df[hole_df['shotType'] != 'TEE'].distanceLeft, self.max_green_dist, 1, 'ft')
         return hole_df
 
     def _createTournamentDF(self, tournament_year_dict, player_names):
-        year_course_hole_round = dfHandler.createHoleLevelDict(tournament_year_dict)
+        self._logger.info('Creating New Tournament DF')
+        year_course_hole_round = TournamentDFHandler.createHoleLevelDict(tournament_year_dict)
         for year in year_course_hole_round.keys():
             for course in year_course_hole_round[year].keys():
                 for hole_num in year_course_hole_round[year][course].keys():
@@ -247,7 +251,7 @@ class dfHandler:
                         if not year_course_hole_round[year][course][hole_num][round_num]['playerShots']:
                             continue
                         self._logger.info(
-                            'Creating hole level DF for tournament {}, year {}, course {}, hole {}, round {}\n'
+                            'Creating hole level DF for tournament {}, pga_year {}, course {}, hole {}, round {}\n'
                                 .format(self._tournament_name, year, course, hole_num, round_num))
                         hole_df = pd.DataFrame.from_dict(
                             year_course_hole_round[year][course][hole_num][round_num])
@@ -258,9 +262,10 @@ class dfHandler:
         self._tournament_df.reset_index()
 
     def _createRawSG_DF(self, sg_dict, player_names):
+        self._logger.info('Creating New Raw SG DF')
         player_name_df = pd.DataFrame(player_names)
         # noinspection PyTypeChecker
-        player_name_df['playerName'] = player_name_df.apply(dfHandler.getNameAbbr, axis=1)
+        player_name_df['playerName'] = player_name_df.apply(TournamentDFHandler.getNameAbbr, axis=1)
         for year in sg_dict.keys():
             self._raw_sg_df = self._raw_sg_df.append(sg_dict[year]['sgStats'])
         numeric_cols = ['sgPUTT', 'sgARG', 'sgAPP', 'sgOTT', 'sgT2G', 'sgTOT']
@@ -275,6 +280,7 @@ class dfHandler:
         return self._raw_sg_df
 
     def uploadTournamentDF(self):
+        self._logger.info('Uploading Tournament DF')
         for course, course_tournament_df in self._tournament_df.groupby('courseID'):
             for year, year_tournament_df in course_tournament_df.groupby('pgaYear'):
                 for round_num, round_tournament_df in year_tournament_df.groupby('roundNum'):
@@ -284,6 +290,7 @@ class dfHandler:
                     self._mongo_upload_df.uploadTournamentDF(upload_dict)
 
     def uploadRawSG_DF(self):
+        self._logger.info('Uploading Raw SG DF')
         for year, year_tournament_df in self._raw_sg_df.groupby('pgaYear'):
             df_dict = year_tournament_df.to_dict('records')
             upload_dict = {'tournamentName': self._tournament_name,

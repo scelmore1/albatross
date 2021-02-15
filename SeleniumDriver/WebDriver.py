@@ -49,8 +49,7 @@ class WebDriver:
         self._wait_time = wait_time
         self._wire_time = wire_time
         self._class_logger = called_from_logger
-        self._selenium_logger = MyLogger('selenium.webdriver.remote.remote_connection', None,
-                                         logging.INFO).getLogger()
+        self._selenium_logger = MyLogger('selenium.webdriver.remote.remote_connection', logging.INFO).getLogger()
         self._class_logger.info('Initializing New Driver...')
         chrome_options = proxyDriver(self.proxy_list)
         prefs = {"profile.default_content_setting_values.notifications": 2,
@@ -61,9 +60,9 @@ class WebDriver:
 
     def updateLogLocations(self, tournament_name, file_handler):
         # selenium log kept separate from class log
-        self._selenium_logger = MyLogger('selenium.webdriver.remote.remote_connection', file_handler,
-                                         logging.WARNING).getLogger()
-        self._class_logger = MyLogger(self.__class__.__name__ + tournament_name, file_handler, logging.INFO,
+        self._selenium_logger = MyLogger('selenium.webdriver.remote.remote_connection', logging.WARNING,
+                                         file_handler).getLogger()
+        self._class_logger = MyLogger(self.__class__.__name__ + tournament_name, logging.INFO, file_handler,
                                       'a').getLogger()
 
     def goToURL(self, url_string):

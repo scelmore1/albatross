@@ -36,6 +36,6 @@ class SGRun:
         return mongo_collection
 
     def __uploadMongoDBCollections(self, sg_stats_col):
-        mongo_upload = MongoUploadSG(self._mongo_client.getTournamentDB())
+        mongo_upload = MongoUploadSG(self._mongo_client)
         mongo_upload.uploadSGStats(sg_stats_col)
         return mongo_upload
