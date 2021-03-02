@@ -209,24 +209,26 @@ class MongoUploadStrokeDistance:
         self._logger_obj = MyLogger(self.__class__.__name__, logging.INFO)
         self._logger = self._logger_obj.getLogger()
         self._tournaments_uploaded = []
+        self._years_uploaded = []
 
     def __repr__(self):
         return 'MongoDB DF Upload Status: {}'.format(self._getUploadStatus())
 
     def _getUploadStatus(self):
-        return 'Tournaments Uploaded: {}\n'.format(self._tournaments_uploaded)
+        return 'Tournaments Uploaded: {}\nYears Uploaded: {}'.format(self._tournaments_uploaded, self._years_uploaded)
 
-    def addTournament(self, tournament_stroke_distance_dict) -> bool:
-        """Create a new document for the given tournament and pga_year stroke and distance data. This data will be
-        aggregated on download to create a universal stroke and distance DF"""
+    def addGroupStrokeDistance(self, tournament_stroke_distance_dict) -> bool:
+        """Create a new document for the given tournament and grouping stroke and distance data"""
         try:
             tournament_name = tournament_stroke_distance_dict['tournamentName']
-            pga_year = tournament_stroke_distance_dict['pgaYear']
+            group_name = tournament_stroke_distance_dict['groupedBy']
+            group_detail = tournament_stroke_distance_dict['groupDetail']
             self._logger_obj.replaceFileHandler('tournaments/stroke_distance/{}/logs/stroke_distance_mongodb.log'
                                                 .format(tournament_name), 'a')
-            self._logger.info('Adding {} {} to the stroke distance collection'.format(pga_year, tournament_name))
+            self._logger.info('Adding {} {} from tournament {} to the stroke distance collection'.
+                              format(group_name, group_detail, tournament_name))
 
-            query = {'tournamentName': tournament_name, 'pgaYear': pga_year}
+            query = {'tournamentName': tournament_name, 'groupedBy': group_name, 'groupDetail': group_detail}
             values = {'$set': tournament_stroke_distance_dict}
             result = self._mongo_obj.stroke_distance_tournament_col.update(query, values, upsert=True)
             if result is not None:
@@ -235,12 +237,39 @@ class MongoUploadStrokeDistance:
                                       format(result['upserted']))
                 else:
                     self._logger.info('Updated existing Stroke Distance document with key {}\n'.format(
-                        {'tournamentName': tournament_name, 'pgaYear': pga_year}))
+                        {'tournamentName': tournament_name, 'groupedBy': group_name, 'groupDetail': group_detail}))
             else:
                 return False
         except Exception as e:
             self._logger.error('Problem uploading Stroke Distance doc {}'.format(e), exc_info=True)
             return False
         else:
-            self._tournaments_uploaded.append((pga_year, tournament_name))
+            self._tournaments_uploaded.append((group_name, group_detail, tournament_name))
+            return True
+
+    def addYearStrokeDistance(self, year_stroke_distance_dict, pga_year) -> bool:
+        """Create a new document for the a years' based stroke and distance data"""
+        try:
+            self._logger_obj.replaceFileHandler('tournaments/stroke_distance/{}/logs/stroke_distance_mongodb.log'
+                                                .format(pga_year), 'w')
+            self._logger.info('Adding {} to the stroke distance yearly collection'.
+                              format(pga_year))
+            query = {'pgaYear': pga_year}
+            year_stroke_distance_dict.update(query)
+            values = {'$set': year_stroke_distance_dict}
+            result = self._mongo_obj.stroke_distance_yearly_col.update(query, values, upsert=True)
+            if result is not None:
+                if not result['updatedExisting']:
+                    self._logger.info('Inserted Stroke Distance Yearly document into collection with id {}\n'.
+                                      format(result['upserted']))
+                else:
+                    self._logger.info('Updated existing Stroke Distance Yearly document with key {}\n'.format(
+                        {'pgaYear': pga_year}))
+            else:
+                return False
+        except Exception as e:
+            self._logger.error('Problem uploading Stroke Distance doc {}'.format(e), exc_info=True)
+            return False
+        else:
+            self._years_uploaded.append(pga_year)
             return True

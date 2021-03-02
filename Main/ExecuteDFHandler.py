@@ -11,27 +11,44 @@ if __name__ == '__main__':
     main_logger = MyLogger('Main', logging.INFO, 'Main/logs/main.log').getLogger()
     mongo_init = MongoInitialization()
 
+    # read in tournaments to do SG analysis on
     tournaments = {}
     pd_reader = pd.read_csv('Analysis/tournament_list.csv', delimiter=',', skipinitialspace=True, header=0)
     for idx, row in pd_reader.iterrows():
-        tournaments[(row.iloc[0], row.iloc[1])] = {}
+        tournaments[row.iloc[0]] = {}
+        tournaments[row.iloc[0]]['scrape name'] = row.iloc[0]
+        tournaments[row.iloc[0]]['sg name'] = row.iloc[1]
 
+    # create the stroke distance handler for making stroke and distance lowess models for each tournament DF
     stroke_distance_handler = StrokeDistanceHandler(mongo_init)
 
-    for tournament_tup in tournaments:
-        tournament_df_handler = TournamentDFHandler(mongo_init, tournament_tup[0], tournament_tup[1])
-        tournament_df = tournament_df_handler.getTournamentDF()
-        tournaments[tournament_tup]['tournament_df'] = tournament_df
+    for tournament in tournaments.values():
+        # create the tournament DF
+        tournament_df_handler = TournamentDFHandler(mongo_init, tournament['scrape name'], tournament['sg name'], None,
+                                                    False)
+        tournament['tournament_df'] = tournament_df_handler.getTournamentDF()
 
+        # get raw SG data
         sg_df = tournament_df_handler.getRawSG_DF()
-        tournaments[tournament_tup]['sg_df'] = sg_df
+        tournament['sg_df'] = sg_df
 
-        stroke_distance_handler.uploadTournament(tournament_df, tournament_tup[0])
+        # use stroke distance handler to analyze tournament shots
+        tournament['stroke_distance'] = stroke_distance_handler.handleTournament(tournament['tournament_df'],
+                                                                                 tournament['scrape name'])
 
-    for df_dict in tournaments.values():
-        for pga_year, year_df in df_dict['tournament_df'].groupby('pgaYear'):
-            x = stroke_distance_handler.yearBasedPredictedStrokesFromDistance(pga_year)
-        # sg_handler = TournamentSGHandler(mongo_init, df_dict['tournament_df'], df_dict['sg_df'])
+        stroke_distance_handler.visualizeGroupedLowessModels(tournament['stroke_distance'], ['Course', 'Year'])
+
+    # get the universal year data
+    for tournament in tournaments.values():
+        grouped_dict = tournament['stroke_distance']
+        if 'Year' in grouped_dict:
+            for pga_year in grouped_dict['Year'].keys():
+                grouped_dict['UniversalYear'][pga_year] = \
+                    stroke_distance_handler.downloadShotDistanceUniversalYear(pga_year)
+
+        stroke_distance_handler.visualizeGroupedLowessModels(tournament['stroke_distance'], ['UniversalYear'])
+
+    # sg_handler = TournamentSGHandler(mongo_init, df_dict['tournament_df'], df_dict['sg_df'])
     # sg_handler.applySGLogicToGroups(True)
     # sg_handler.getSGTee(False)
 

@@ -4,17 +4,11 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
+from Analysis.StrokeDistanceHandler import StrokeDistanceHandler
 from Logging.MyLogger import MyLogger
 
 
 class TournamentSGHandler:
-    grouping_list = [('Course', ['courseID']),
-                     ('Year', ['pgaYear']),
-                     ('Round', ['roundNum']),
-                     ('Hole', ['holeNum']),
-                     ('YearRound', ['pgaYear', 'roundNum']),
-                     ('YearHole', ['pgaYear', 'holeNum']),
-                     ('YearRoundHole', ['pgaYear', 'roundNum', 'holeNum'])]
     pd.set_option('display.max_columns', None)
 
     @staticmethod
@@ -46,6 +40,33 @@ class TournamentSGHandler:
         df['NumSTDFromSG{}Over_{}'.format(sg_type, column_to_avg)] = \
             abs(df['SG{}Over_{}'.format(sg_type, column_to_avg)] / df['{}STDofSG{}'.format(name, sg_type)])
         return df
+
+    @staticmethod
+    def getStartingShotStrokeDistanceValues(starting_shots, grouping_list=None, visualize=False):
+        if grouping_list is None:
+            grouping_list = ['startDistance10ydBin']
+        start_distance_grouped = starting_shots.groupby(grouping_list, as_index=False).mean()
+        start_distance_grouped['shotsTaken'] = start_distance_grouped['shotsRemaining'] + 1
+        start_distance_grouped['distance/shots'] = start_distance_grouped.apply(lambda x: str(x['startDistance']) + '/'
+                                                                                          + str(x['shotsTaken']),
+                                                                                axis=1)
+        start_distance_grouped['lowessPredictedShots'] = start_distance_grouped['distance/shots']. \
+            transform(StrokeDistanceHandler.lowessExpectedShotsByDistance)
+        start_distance_grouped.drop(columns='distance/shots', inplace=True)
+        if visualize:
+            _ = sns.lmplot(data=start_distance_grouped, x='startDistance', y='shotsTaken', hue='par', lowess=True)
+            plt.title('Expected Shots From Start Distance Lowess Model')
+            plt.show()
+        return start_distance_grouped
+
+    @staticmethod
+    def getRemainingShotStrokeDistanceValues(remaining_shots, distance_bin='distanceLeft5ydBin', grouping_list=None):
+        if grouping_list is None:
+            grouping_list = ['toSurface', distance_bin]
+        distance_left_grouped = remaining_shots.groupby(grouping_list, as_index=False).mean()
+        distance_left_grouped = StrokeDistanceHandler.remainingExpectedShots(distance_left_grouped, True)
+        distance_left_grouped.drop(columns='distance/shots', inplace=True)
+        return distance_left_grouped
 
     # @staticmethod
     # def createSGTeeColumns(df, name):

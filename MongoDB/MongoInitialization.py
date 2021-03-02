@@ -52,7 +52,8 @@ class MongoInitialization:
         # create stroke distance collections if don't exist
         self.stroke_distance_tournament_col = self._createStrokeDistanceDBCollection('stroke_distance_tournaments',
                                                                                      [('tournamentName', 1),
-                                                                                      ('pgaYear', -1)])
+                                                                                      ('groupedBy', 1),
+                                                                                      ('groupDetail', 1)])
         self.stroke_distance_yearly_col = self._createStrokeDistanceDBCollection('stroke_distance_yearly',
                                                                                  [('pgaYear', -1)])
 
